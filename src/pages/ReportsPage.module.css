@@ -1,0 +1,211 @@
+.reportsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.headerSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.headerTitleWrapper h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.headerSubtitle {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Filter controls bar */
+.filterBar {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.filterLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.filterSelect {
+  width: auto;
+  min-width: 160px;
+  padding: 6px 12px;
+}
+
+/* Print Header for Landscape A4 */
+.printHeader {
+  display: none;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #0F172A;
+}
+
+.printTitle {
+  font-size: 18pt;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.printMeta {
+  font-size: 10pt;
+  color: #475569;
+  margin-top: 4px;
+  display: flex;
+  gap: 20px;
+}
+
+/* Matrix Table Styling */
+.matrixWrapper {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.matrixTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.matrixTable th,
+.matrixTable td {
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.matrixTable th {
+  background-color: var(--bg-surface-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.matrixTable th.memberCol,
+.matrixTable td.memberCol {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background-color: var(--bg-surface);
+  z-index: 2;
+  min-width: 200px;
+}
+
+.matrixTable th.memberCol {
+  background-color: var(--bg-surface-subtle);
+}
+
+.serviceDayCol {
+  min-width: 90px;
+}
+
+.rateCol {
+  min-width: 110px;
+  font-weight: 600;
+  background-color: var(--bg-surface-subtle);
+}
+
+.cellPresent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cellTime {
+  font-weight: 600;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+
+.cellLateMarker {
+  color: #D97706;
+  font-weight: 700;
+}
+
+.cellAbsent {
+  color: #94A3B8;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.legendBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media print {
+  .printHeader {
+    display: block !important;
+  }
+  .filterBar,
+  .headerControls,
+  .legendBar {
+    display: none !important;
+  }
+  .matrixWrapper {
+    border: none !important;
+  }
+  .matrixTable th,
+  .matrixTable td {
+    border: 1px solid #94A3B8 !important;
+    padding: 6px 8px !important;
+    font-size: 9pt !important;
+  }
+  .matrixTable th.memberCol,
+  .matrixTable td.memberCol {
+    position: static !important;
+  }
+}

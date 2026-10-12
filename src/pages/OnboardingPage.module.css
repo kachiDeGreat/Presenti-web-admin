@@ -1,0 +1,1195 @@
+.onboardingRoot {
+  min-height: 100vh;
+  background-color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboardingHeader {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brandCluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandLogo {
+  width: 36px;
+  height: 36px;
+  background: #0F2042;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38BDF8;
+}
+
+.brandName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.brandBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.05em;
+}
+
+.userBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+}
+
+.userAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mainContent {
+  flex: 1;
+  max-width: 780px;
+  width: 100%;
+  margin: 36px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Stepper Bar */
+.stepperContainer {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 24px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+.stepperTrack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  position: relative;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+}
+
+.stepItem:hover {
+  background-color: #F8FAFC;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #F1F5F9;
+  border: 1.5px solid #E2E8F0;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.stepItemActive .stepNumber {
+  background-color: #2563EB;
+  border-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.stepItemComplete .stepNumber {
+  background-color: #059669;
+  border-color: #059669;
+  color: #FFFFFF;
+}
+
+.stepTitles {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+}
+
+.stepName {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.stepItemActive .stepName {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+/* Step Wizard Card */
+.wizardCard {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 36px 40px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 4px 10px -3px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wizardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 18px;
+}
+
+.wizardTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.wizardSubtitle {
+  color: #64748B;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.formSection + .formSection {
+  border-top: 1px solid #F1F5F9;
+  padding-top: 20px;
+}
+
+.sectionTitle {
+  font-size: 0.825rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.inputsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldGroup label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: #64748B;
+  margin-top: -2px;
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+
+.settingsNote {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.inputError {
+  border-color: #EF4444 !important;
+  background-color: #FEF2F2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+.inputError:focus {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22) !important;
+}
+
+.fieldErrorText {
+  color: #DC2626;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  animation: fadeInDown 150ms ease-out;
+}
+
+.timeAlertError {
+  background-color: #FEF2F2;
+  border: 1.5px solid #FCA5A5;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #991B1B;
+  font-size: 0.825rem;
+  line-height: 1.45;
+  animation: fadeInDown 200ms ease-out;
+}
+
+.timeAlertSuccess {
+  background-color: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #166534;
+  font-size: 0.825rem;
+  line-height: 1.45;
+}
+
+.timeAlertIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.codeActionGroup {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.codeActionGroup input {
+  flex: 1;
+}
+
+.codeGenBtn {
+  height: 44px;
+  padding: 0 16px;
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1.5px solid #BFDBFE;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+
+.codeGenBtn:hover {
+  background-color: #DBEAFE;
+  border-color: #93C5FD;
+}
+
+.inputIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIconWrapper > svg {
+  position: absolute;
+  left: 14px;
+  color: #94A3B8;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.inputIconWrapper input {
+  padding-left: 42px !important;
+  width: 100%;
+}
+
+.autocompleteWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestionsDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  font-size: 0.875rem;
+  color: #1E293B;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+}
+
+.suggestionItem:hover,
+.suggestionItemActive {
+  background-color: #EFF6FF;
+}
+
+.suggestionIconWrapper {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background-color: #F1F5F9;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 120ms ease;
+}
+
+.suggestionItem:hover .suggestionIconWrapper {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+}
+
+.suggestionIcon {
+  position: static !important;
+  color: inherit !important;
+  flex-shrink: 0;
+  pointer-events: auto !important;
+}
+
+.suggestionDetails {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestionMain {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+  color: #0F172A;
+}
+
+.suggestionItem:hover .suggestionMain {
+  color: #1D4ED8;
+}
+
+.suggestionSub {
+  font-size: 0.75rem;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestionSearching {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  font-size: 0.825rem;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.suggestionEmpty {
+  padding: 12px 14px;
+  font-size: 0.825rem;
+  color: #94A3B8;
+  text-align: center;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.verifiedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #059669;
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.readOnlyField {
+  background-color: #F8FAFC !important;
+  color: #475569 !important;
+  cursor: not-allowed;
+  border-color: #E2E8F0 !important;
+}
+
+/* Presets & Chips */
+.presetsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.presetsTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+}
+
+.presetChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.presetChip {
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms ease;
+}
+
+.presetChip:hover {
+  border-color: #2563EB;
+  color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+.selectedChipsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+}
+
+.chipRemovable {
+  background-color: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: #0F172A;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chipRemoveBtn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.chipRemoveBtn:hover {
+  color: #EF4444;
+  background-color: #FEE2E2;
+}
+
+/* Service Day Selector */
+.serviceDaysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.dayCard {
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms ease;
+}
+
+.dayCard:hover {
+  border-color: #94A3B8;
+}
+
+.dayCardSelected {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.dayCardName {
+  font-weight: 600;
+  font-size: 0.825rem;
+  color: #0F172A;
+}
+
+.dayCardType {
+  font-size: 0.65rem;
+  color: #64748B;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Radius options */
+.radiusGrid {
+  display: flex;
+  gap: 8px;
+}
+
+.radiusBtn {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  background-color: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.radiusBtn:hover {
+  border-color: #94A3B8;
+}
+
+.radiusBtnActive {
+  background-color: #0F2042;
+  color: #FFFFFF;
+  border-color: #0F2042;
+}
+
+/* Wi-Fi Scanner UI */
+.wifiScanBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.wifiResultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.wifiItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  text-align: left;
+  width: 100%;
+}
+
+.wifiItem:hover {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+.wifiItemActive {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.wifiItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wifiItemIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: #EFF6FF;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wifiItemTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wifiItemSsid {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #0F172A;
+}
+
+.wifiItemBssid {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-family: monospace;
+}
+
+.wifiItemBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wifiPill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background-color: #F1F5F9;
+  color: #475569;
+}
+
+.wifiSignalStrong {
+  background-color: #DCFCE7;
+  color: #166534;
+}
+
+/* Acquired Location Card */
+.acquiredLocationCard {
+  background-color: #EFF6FF;
+  border: 1.5px solid #BFDBFE;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.acquiredDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.acquiredLabel {
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #2563EB;
+}
+
+.acquiredPlace {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1E3A8A;
+}
+
+.acquiredCoords {
+  font-size: 0.75rem;
+  color: #3B82F6;
+  font-family: monospace;
+}
+
+/* Interactive Radius Controls */
+.radiusControlBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.radiusSliderRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.radiusSlider {
+  flex: 1;
+  height: 6px;
+  border-radius: 4px;
+  accent-color: #2563EB;
+  cursor: pointer;
+}
+
+.radiusNumberDisplay {
+  min-width: 85px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: #F1F5F9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Wizard Navigation Footer */
+.wizardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 24px;
+  margin-top: 8px;
+}
+
+/* Modals System */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 150ms ease-out;
+}
+
+.modalContainer {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+  animation: slideUp 180ms ease-out;
+}
+
+.modalContainerWide {
+  max-width: 680px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FFFFFF;
+}
+
+.modalTitleCluster {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modalTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalSubtitle {
+  font-size: 0.8rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.modalCloseBtn {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.modalCloseBtn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.modalBody {
+  padding: 20px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalFooter {
+  padding: 14px 22px;
+  border-top: 1px solid #F1F5F9;
+  background-color: #F8FAFC;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Smartphone-Style Wi-Fi Drawer */
+.phoneWifiCard {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phoneWifiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.phoneWifiScanning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #2563EB;
+}
+
+.phoneWifiSectionTitle {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+.phoneWifiList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.phoneWifiRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  width: 100%;
+}
+
+.phoneWifiRow:hover {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+.phoneWifiRowActive {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.phoneWifiLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.phoneWifiIconBox {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: #EFF6FF;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phoneWifiInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phoneWifiName {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.phoneWifiMac {
+  font-size: 0.725rem;
+  color: #64748B;
+  font-family: monospace;
+}
+
+.phoneWifiRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Modal Launch Trigger Cards on Step 4 */
+.anchorConfigCard {
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 150ms ease;
+}
+
+.anchorConfigCard:hover {
+  border-color: #94A3B8;
+}
+
+.anchorConfigCardActive {
+  border-color: #2563EB;
+  background-color: #F8FAFC;
+}
+
+.anchorCardDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.anchorCardTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.anchorCardDesc {
+  font-size: 0.8rem;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+.anchorCardValueBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: monospace;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.actionModalBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+
+.actionModalBtnPrimary {
+  background-color: #0F2042;
+  color: #FFFFFF;
+  border: 1px solid #0F2042;
+}
+
+.actionModalBtnPrimary:hover {
+  background-color: #1E3A8A;
+  border-color: #1E3A8A;
+}
+
+.actionModalBtnOutline {
+  background-color: #FFFFFF;
+  color: #2563EB;
+  border: 1.5px solid #BFDBFE;
+}
+
+.actionModalBtnOutline:hover {
+  background-color: #EFF6FF;
+  border-color: #2563EB;
+}
+
+@media (max-width: 768px) {
+  .inputsGrid {
+    grid-template-columns: 1fr;
+  }
+  .stepperTrack {
+    grid-template-columns: 1fr 1fr;
+  }
+  .serviceDaysGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .wizardCard {
+    padding: 24px 20px;
+  }
+}

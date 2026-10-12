@@ -1,0 +1,353 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase';
+import type { Church, UserProfile } from '../types';
+import {
+  fetchChurchDoc,
+  saveChurchDoc,
+  saveStoredChurch,
+} from '../services/dataService';
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  displayName: string;
+  churchName: string;
+  branchName: string;
+  churchCode: string;
+}
+
+interface AuthContextType {
+  user: UserProfile | null;
+  church: Church | null;
+  loading: boolean;
+  signInWithGoogle: () => Promise<{ isNewUser: boolean; churchExists: boolean }>;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
+  logout: () => Promise<void>;
+  updateChurch: (updated: Partial<Church>) => Promise<void>;
+  createChurchWorkspace: (data: Omit<Church, 'id' | 'adminUids'>) => Promise<Church>;
+  isLiveFirebase: boolean;
+}
+
+const SESSION_KEY = 'sanctuary_active_session';
+const ACCOUNTS_KEY = 'sanctuary_registered_admins';
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [church, setChurch] = useState<Church | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize Auth state
+  useEffect(() => {
+    if (isFirebaseConfigured && auth) {
+      const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+        if (fbUser) {
+          const profile: UserProfile = {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName || fbUser.email?.split('@')[0],
+            photoURL: fbUser.photoURL,
+            emailVerified: fbUser.emailVerified,
+          };
+          setUser(profile);
+          const churchData = await fetchChurchDoc(fbUser.uid);
+          setChurch(churchData);
+        } else {
+          setUser(null);
+          setChurch(null);
+        }
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // Local session restoration
+      const activeSession = localStorage.getItem(SESSION_KEY);
+      if (activeSession) {
+        try {
+          const profile: UserProfile = JSON.parse(activeSession);
+          setUser(profile);
+          fetchChurchDoc(profile.uid).then((c) => setChurch(c));
+        } catch {
+          localStorage.removeItem(SESSION_KEY);
+          setUser(null);
+          setChurch(null);
+        }
+      } else {
+        setUser(null);
+        setChurch(null);
+      }
+      setLoading(false);
+    }
+  }, []);
+
+  const signInWithGoogle = async (): Promise<{ isNewUser: boolean; churchExists: boolean }> => {
+    if (isFirebaseConfigured && auth) {
+      const cred = await signInWithPopup(auth, googleProvider);
+      const profile: UserProfile = {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || cred.user.email?.split('@')[0],
+        photoURL: cred.user.photoURL,
+        emailVerified: cred.user.emailVerified,
+      };
+      setUser(profile);
+
+      const existingChurch = await fetchChurchDoc(cred.user.uid);
+      if (existingChurch) {
+        setChurch(existingChurch);
+        return { isNewUser: false, churchExists: true };
+      } else {
+        setChurch(null);
+        return { isNewUser: true, churchExists: false };
+      }
+    } else {
+      // Local fallback with verified Google credentials simulation
+      const mockGoogleProfile: UserProfile = {
+        uid: 'google-usr-' + Date.now(),
+        email: 'pastor.office@sanctuary.org',
+        displayName: 'Pastor Lead Minister',
+        photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
+        emailVerified: true,
+      };
+      setUser(mockGoogleProfile);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(mockGoogleProfile));
+      const existing = await fetchChurchDoc(mockGoogleProfile.uid);
+      if (existing) {
+        setChurch(existing);
+        return { isNewUser: false, churchExists: true };
+      }
+      return { isNewUser: true, churchExists: false };
+    }
+  };
+
+  const login = async (email: string, pass: string): Promise<void> => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (isFirebaseConfigured && auth) {
+      const cred = await signInWithEmailAndPassword(auth, cleanEmail, pass);
+      const profile: UserProfile = {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || cleanEmail.split('@')[0],
+        photoURL: cred.user.photoURL,
+        emailVerified: cred.user.emailVerified,
+      };
+      setUser(profile);
+      const churchData = await fetchChurchDoc(cred.user.uid);
+      setChurch(churchData);
+    } else {
+      const accountsRaw = localStorage.getItem(ACCOUNTS_KEY);
+      const accounts: Array<{
+        email: string;
+        passwordHash: string;
+        displayName: string;
+        uid: string;
+      }> = accountsRaw ? JSON.parse(accountsRaw) : [];
+
+      const found = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
+      if (!found || found.passwordHash !== pass) {
+        throw new Error('Invalid email or password. Please verify your credentials or register an account.');
+      }
+
+      const profile: UserProfile = {
+        uid: found.uid,
+        email: found.email,
+        displayName: found.displayName,
+      };
+
+      setUser(profile);
+      const c = await fetchChurchDoc(found.uid);
+      setChurch(c);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+    }
+  };
+
+  const register = async (payload: RegisterPayload): Promise<void> => {
+    const cleanEmail = payload.email.trim().toLowerCase();
+    const cleanCode = payload.churchCode.trim().toUpperCase();
+
+    if (isFirebaseConfigured && auth) {
+      const cred = await createUserWithEmailAndPassword(auth, cleanEmail, payload.password);
+      if (cred.user && payload.displayName) {
+        await updateProfile(cred.user, { displayName: payload.displayName });
+      }
+
+      const profile: UserProfile = {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: payload.displayName || cleanEmail.split('@')[0],
+        photoURL: null,
+        emailVerified: cred.user.emailVerified,
+      };
+      setUser(profile);
+
+      const newChurch: Church = {
+        id: cred.user.uid,
+        churchName: payload.churchName.trim(),
+        branchName: payload.branchName.trim(),
+        churchCode: cleanCode,
+        adminUids: [cred.user.uid],
+        departments: [
+          'Engineering & Tech',
+          'Operations & Logistics',
+          'Media & Marketing',
+          'Human Resources',
+          'Finance & Legal',
+          'Administration',
+        ],
+        beaconConfig: {
+          targetBssid: '',
+          ssidHint: '',
+        },
+        geoFallback: {
+          latitude: 0,
+          longitude: 0,
+          radiusMeters: 0,
+        },
+        policySettings: {
+          serviceDays: [1, 2, 3, 4, 5],
+          arrivalCutoff: '08:00',
+          lateTolerance: '08:30',
+          syncCutoff: '17:00',
+        },
+      };
+      await saveChurchDoc(newChurch);
+      setChurch(newChurch);
+    } else {
+      const accountsRaw = localStorage.getItem(ACCOUNTS_KEY);
+      const accounts: Array<{
+        email: string;
+        passwordHash: string;
+        displayName: string;
+        uid: string;
+      }> = accountsRaw ? JSON.parse(accountsRaw) : [];
+
+      if (accounts.some((a) => a.email.toLowerCase() === cleanEmail)) {
+        throw new Error('An administrator account with this email address already exists. Please sign in.');
+      }
+
+      const newUid = 'admin-' + Date.now();
+      accounts.push({
+        email: cleanEmail,
+        passwordHash: payload.password,
+        displayName: payload.displayName.trim(),
+        uid: newUid,
+      });
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+
+      const profile: UserProfile = {
+        uid: newUid,
+        email: cleanEmail,
+        displayName: payload.displayName.trim(),
+      };
+      setUser(profile);
+
+      const newChurch: Church = {
+        id: newUid,
+        churchName: payload.churchName.trim(),
+        branchName: payload.branchName.trim(),
+        churchCode: cleanCode,
+        adminUids: [newUid],
+        departments: [
+          'Engineering & Tech',
+          'Operations & Logistics',
+          'Media & Marketing',
+          'Human Resources',
+          'Finance & Legal',
+          'Administration',
+        ],
+        beaconConfig: {
+          targetBssid: '',
+          ssidHint: '',
+        },
+        geoFallback: {
+          latitude: 0,
+          longitude: 0,
+          radiusMeters: 0,
+        },
+        policySettings: {
+          serviceDays: [1, 2, 3, 4, 5],
+          arrivalCutoff: '08:00',
+          lateTolerance: '08:30',
+          syncCutoff: '17:00',
+        },
+      };
+      saveStoredChurch(newChurch);
+      localStorage.setItem(`sanctuary_church_${newUid}`, JSON.stringify(newChurch));
+      setChurch(newChurch);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+    }
+  };
+
+  const createChurchWorkspace = async (
+    data: Omit<Church, 'id' | 'adminUids'>
+  ): Promise<Church> => {
+    if (!user) throw new Error('Authentication required to provision church workspace.');
+
+    const newChurch: Church = {
+      ...data,
+      id: user.uid,
+      adminUids: [user.uid],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await saveChurchDoc(newChurch);
+    setChurch(newChurch);
+    return newChurch;
+  };
+
+  const logout = async (): Promise<void> => {
+    if (isFirebaseConfigured && auth) {
+      await signOut(auth);
+    }
+    localStorage.removeItem(SESSION_KEY);
+    setUser(null);
+    setChurch(null);
+  };
+
+  const updateChurch = async (updated: Partial<Church>): Promise<void> => {
+    if (!church) return;
+    const merged: Church = { ...church, ...updated };
+    setChurch(merged);
+    await saveChurchDoc(merged);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        church,
+        loading,
+        signInWithGoogle,
+        login,
+        register,
+        logout,
+        updateChurch,
+        createChurchWorkspace,
+        isLiveFirebase: isFirebaseConfigured,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
