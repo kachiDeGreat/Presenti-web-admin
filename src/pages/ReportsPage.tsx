@@ -10,7 +10,6 @@ import {
   Activity,
   Radio,
   FileSpreadsheet,
-  Clock,
   ShieldCheck,
   PlusCircle,
   X,
