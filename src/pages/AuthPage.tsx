@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Wifi,
-  MapPin,
-  CheckCircle2,
-  FileSpreadsheet,
-} from "lucide-react";
+import { Wifi, MapPin, CheckCircle2, FileSpreadsheet } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import styles from "./AuthPage.module.css";
@@ -129,7 +124,13 @@ export const AuthPage: React.FC = () => {
           <img
             src="/image/app-icon.png"
             alt="Presenti"
-            style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)' }}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              objectFit: "cover",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+            }}
           />
           <span className={styles.brandName}>Presenti</span>
         </div>
@@ -221,7 +222,7 @@ export const AuthPage: React.FC = () => {
           ===================================================================== */}
       <div className={styles.showcasePane}>
         <div className={styles.showcaseTop}>
-          <span className={styles.badgePill}>Official Portal</span>
+          {/* <span className={styles.badgePill}>Official Portal</span> */}
         </div>
 
         {/* Sliding Carousel Track */}
