@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   doc,
   getDoc,
   getDocs,
@@ -10,6 +11,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../config/firebase';
 import type { Church, ChurchMember, AttendanceRecord } from '../types';
@@ -358,6 +360,78 @@ export const fetchChurchDoc = async (
   return null;
 };
 
+// Check if an email or UID is registered as a workforce member / employee on the mobile app
+export const checkIfUserIsWorker = async (
+  email?: string | null,
+  uid?: string | null
+): Promise<boolean> => {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  if (!cleanEmail && !uid) return false;
+
+  // 1. Local storage check for local/offline testing
+  const localMembersRaw = localStorage.getItem('sanctuary_members_data');
+  if (localMembersRaw) {
+    try {
+      const localMembers = JSON.parse(localMembersRaw);
+      if (
+        Array.isArray(localMembers) &&
+        localMembers.some(
+          (m: any) =>
+            (cleanEmail && m.email?.toLowerCase() === cleanEmail) ||
+            (uid && m.id === uid)
+        )
+      ) {
+        return true;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  if (isFirebaseConfigured && db) {
+    try {
+      // 2. Direct O(1) read from central account_roles registry
+      if (cleanEmail) {
+        const roleRef = doc(db, 'account_roles', cleanEmail);
+        const roleSnap = await getDoc(roleRef);
+        if (roleSnap.exists()) {
+          const roleData = roleSnap.data();
+          if (roleData.role === 'WORKER') return true;
+          if (roleData.role === 'ADMIN') return false;
+        }
+      }
+
+      // 3. Query collectionGroup('members') across all organizations
+      if (cleanEmail) {
+        const membersGroup = collectionGroup(db, 'members');
+        const qEmail = query(membersGroup, where('email', '==', cleanEmail), limit(1));
+        const snapEmail = await getDocs(qEmail);
+        if (!snapEmail.empty) {
+          // Cache in account_roles for instant subsequent checks
+          try {
+            await setDoc(
+              doc(db, 'account_roles', cleanEmail),
+              {
+                email: cleanEmail,
+                role: 'WORKER',
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          } catch {
+            // non-fatal
+          }
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Error checking if user is a worker:', err);
+    }
+  }
+
+  return false;
+};
+
 export const saveChurchDoc = async (church: Church): Promise<void> => {
   saveStoredChurch(church);
   localStorage.setItem(`sanctuary_church_${church.id}`, JSON.stringify(church));
@@ -365,6 +439,25 @@ export const saveChurchDoc = async (church: Church): Promise<void> => {
     try {
       const ref = doc(db, 'churches', church.id);
       await setDoc(ref, church, { merge: true });
+
+      // Automatically register administrator role in account_roles
+      const cleanEmail = church.adminEmail?.trim().toLowerCase();
+      if (cleanEmail) {
+        try {
+          await setDoc(
+            doc(db, 'account_roles', cleanEmail),
+            {
+              email: cleanEmail,
+              role: 'ADMIN',
+              churchId: church.id,
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+        } catch {
+          // non-fatal
+        }
+      }
     } catch (err: unknown) {
       console.warn(
         'Firestore saveChurchDoc error: Permissions may be restricted in Firebase Console. Local workspace saved.',

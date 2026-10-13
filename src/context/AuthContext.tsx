@@ -14,6 +14,7 @@ import {
   fetchChurchDoc,
   saveChurchDoc,
   saveStoredChurch,
+  checkIfUserIsWorker,
 } from '../services/dataService';
 
 export interface RegisterPayload {
@@ -65,6 +66,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           // Fetch church document FIRST before committing user to state
           const churchData = await fetchChurchDoc(fbUser.uid, fbUser.email);
+          if (!churchData && fbUser.email) {
+            const isWorker = await checkIfUserIsWorker(fbUser.email, fbUser.uid);
+            if (isWorker) {
+              if (auth) await signOut(auth);
+              if (isMounted) {
+                setUser(null);
+                setChurch(null);
+                setLoading(false);
+              }
+              return;
+            }
+          }
           if (isMounted) {
             setUser(profile);
             setChurch(churchData);
@@ -129,6 +142,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // CRITICAL: Await church lookup BEFORE updating React state to eliminate the onboarding screen flash
       const existingChurch = await fetchChurchDoc(cred.user.uid, cred.user.email);
+
+      // Security check: If no existing church workspace, ensure account is NOT a mobile workforce member
+      if (!existingChurch && cred.user.email) {
+        const isWorker = await checkIfUserIsWorker(cred.user.email, cred.user.uid);
+        if (isWorker) {
+          if (auth) await signOut(auth);
+          throw new Error(
+            `This account (${cred.user.email}) is registered as a workforce member on the mobile app. Workforce accounts cannot create or access administrative workspaces on the web portal. Please sign in with a designated administrator account.`
+          );
+        }
+      }
+
       setUser(profile);
       setChurch(existingChurch);
 
@@ -170,6 +195,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailVerified: cred.user.emailVerified,
       };
       const churchData = await fetchChurchDoc(cred.user.uid, cred.user.email);
+      if (!churchData && cleanEmail) {
+        const isWorker = await checkIfUserIsWorker(cleanEmail, cred.user.uid);
+        if (isWorker) {
+          if (auth) await signOut(auth);
+          throw new Error(
+            `This account (${cleanEmail}) is registered as a workforce member on the mobile app. Workforce accounts cannot access the administrative portal.`
+          );
+        }
+      }
       setUser(profile);
       setChurch(churchData);
     } else {
@@ -202,6 +236,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (payload: RegisterPayload): Promise<void> => {
     const cleanEmail = payload.email.trim().toLowerCase();
     const cleanCode = payload.churchCode.trim().toUpperCase();
+
+    // Verify this email is not a mobile workforce member
+    const isWorker = await checkIfUserIsWorker(cleanEmail);
+    if (isWorker) {
+      throw new Error(
+        `This email address (${cleanEmail}) is registered as a workforce member on the mobile app. Workforce accounts cannot create administrator workspaces. Please use a separate administrator email address.`
+      );
+    }
 
     if (isFirebaseConfigured && auth) {
       const cred = await createUserWithEmailAndPassword(auth, cleanEmail, payload.password);
@@ -322,6 +364,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     data: Omit<Church, 'id' | 'adminUids'>
   ): Promise<Church> => {
     if (!user) throw new Error('Authentication required to provision church workspace.');
+
+    const cleanEmail = (data.adminEmail || user.email || '').trim().toLowerCase();
+    const isWorker = await checkIfUserIsWorker(cleanEmail, user.uid);
+    if (isWorker) {
+      throw new Error(
+        `This account is registered as a workforce member on the mobile app and cannot provision an administrator workspace.`
+      );
+    }
 
     const newChurch: Church = {
       ...data,

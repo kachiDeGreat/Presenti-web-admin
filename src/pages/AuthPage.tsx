@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wifi, MapPin, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { Wifi, MapPin, FileSpreadsheet } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import styles from "./AuthPage.module.css";
@@ -183,7 +183,7 @@ export const AuthPage: React.FC = () => {
           </div>
 
           {/* Verification & Architecture Card */}
-          <div className={styles.trustCard}>
+          {/* <div className={styles.trustCard}>
             <div className={styles.trustHeader}>
               <CheckCircle2 size={16} color="#059669" />
               <span>Verified Administrative Authentication</span>
@@ -211,7 +211,7 @@ export const AuthPage: React.FC = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
