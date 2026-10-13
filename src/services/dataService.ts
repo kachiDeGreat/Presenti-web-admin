@@ -2,11 +2,13 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
   query,
+  where,
   orderBy,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../config/firebase';
@@ -264,13 +266,59 @@ export const saveStoredAttendance = (records: AttendanceRecord[]): void => {
 };
 
 // Firestore integration methods
-export const fetchChurchDoc = async (churchId: string): Promise<Church | null> => {
+export const fetchChurchDoc = async (
+  churchId: string,
+  userEmail?: string | null
+): Promise<Church | null> => {
   if (isFirebaseConfigured && db) {
     try {
+      // 1. Direct document lookup by ID (e.g. churches/{uid})
       const ref = doc(db, 'churches', churchId);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        return { id: snap.id, ...(snap.data() as Omit<Church, 'id'>) };
+        const churchData = { id: snap.id, ...(snap.data() as Omit<Church, 'id'>) };
+        saveStoredChurch(churchData);
+        localStorage.setItem(`sanctuary_church_${churchId}`, JSON.stringify(churchData));
+        return churchData;
+      }
+
+      // 2. Query churches collection where adminUids contains churchId
+      const churchesCol = collection(db, 'churches');
+      const qUids = query(churchesCol, where('adminUids', 'array-contains', churchId));
+      const snapUids = await getDocs(qUids);
+      if (!snapUids.empty) {
+        const found = snapUids.docs[0];
+        const churchData = { id: found.id, ...(found.data() as Omit<Church, 'id'>) };
+        saveStoredChurch(churchData);
+        localStorage.setItem(`sanctuary_church_${churchId}`, JSON.stringify(churchData));
+        return churchData;
+      }
+
+      // 3. Query churches collection where adminEmail matches userEmail
+      if (userEmail) {
+        const cleanEmail = userEmail.trim().toLowerCase();
+        const qEmail = query(churchesCol, where('adminEmail', '==', cleanEmail));
+        const snapEmail = await getDocs(qEmail);
+        if (!snapEmail.empty) {
+          const found = snapEmail.docs[0];
+          const churchData = { id: found.id, ...(found.data() as Omit<Church, 'id'>) };
+          // Link this user's UID to adminUids for fast direct lookup next time
+          if (!churchData.adminUids) {
+            churchData.adminUids = [churchId];
+          } else if (!churchData.adminUids.includes(churchId)) {
+            churchData.adminUids.push(churchId);
+          }
+          try {
+            await updateDoc(doc(db, 'churches', found.id), {
+              adminUids: churchData.adminUids,
+            });
+          } catch {
+            // non-fatal
+          }
+          saveStoredChurch(churchData);
+          localStorage.setItem(`sanctuary_church_${churchId}`, JSON.stringify(churchData));
+          return churchData;
+        }
       }
     } catch (err: unknown) {
       console.warn(
@@ -279,14 +327,34 @@ export const fetchChurchDoc = async (churchId: string): Promise<Church | null> =
       );
     }
   }
+
+  // 4. Local storage fallback (for offline or local dev persistence)
   const local = localStorage.getItem(`sanctuary_church_${churchId}`);
   if (local) {
     try {
       return JSON.parse(local);
     } catch {
-      return null;
+      // fallback
     }
   }
+
+  const genericLocal = localStorage.getItem('sanctuary_church_data');
+  if (genericLocal) {
+    try {
+      const parsed = JSON.parse(genericLocal);
+      if (
+        parsed &&
+        (parsed.id === churchId ||
+          parsed.adminUids?.includes(churchId) ||
+          (userEmail && parsed.adminEmail?.toLowerCase() === userEmail.toLowerCase()))
+      ) {
+        return parsed;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
   return null;
 };
 

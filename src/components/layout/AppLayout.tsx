@@ -17,10 +17,10 @@ import { useAuth } from "../../context/AuthContext";
 import styles from "./AppLayout.module.css";
 
 export const AppLayout: React.FC = () => {
-  const { user, church, logout } = useAuth();
+  const { user, church, loading, logout } = useAuth();
   const navigate = useNavigate();
 
-  if (user && !church) {
+  if (!loading && user && !church) {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -233,10 +233,10 @@ export const AppLayout: React.FC = () => {
                 church?.churchName ||
                 "Attendance Command Center"}
             </div>
-            <div className={`badge badge-success ${styles.topbarStatusPill}`}>
+            {/* <div className={`badge badge-success ${styles.topbarStatusPill}`}>
               <span className={styles.liveDot} />
               <span>Real-Time Stream Active</span>
-            </div>
+            </div> */}
           </div>
 
           <div className={styles.topbarRight}>

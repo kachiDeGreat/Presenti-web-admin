@@ -14,6 +14,9 @@ export const AuthPage: React.FC = () => {
 
   // Active Session Guard: Auto-redirect if user already has an active authenticated session
   useEffect(() => {
+    // Do not interfere while user is actively completing Google popup authentication
+    if (isGoogleLoading) return;
+
     if (!loading && user) {
       if (church) {
         navigate("/dashboard", { replace: true });
@@ -21,7 +24,7 @@ export const AuthPage: React.FC = () => {
         navigate("/onboarding", { replace: true });
       }
     }
-  }, [user, church, loading, navigate]);
+  }, [user, church, loading, navigate, isGoogleLoading]);
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % 3);
@@ -53,12 +56,12 @@ export const AuthPage: React.FC = () => {
         toast.success(
           "Google authentication verified. Opening attendance dashboard...",
         );
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       } else {
         toast.info(
           "Google account verified. Starting step-by-step branch onboarding...",
         );
-        navigate("/onboarding");
+        navigate("/onboarding", { replace: true });
       }
     } catch (err: unknown) {
       if (isDone) return;

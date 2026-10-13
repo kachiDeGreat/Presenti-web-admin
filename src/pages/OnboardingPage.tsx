@@ -181,8 +181,15 @@ const WEEK_DAYS = [
 ];
 
 export const OnboardingPage: React.FC = () => {
-  const { user, createChurchWorkspace } = useAuth();
+  const { user, church, loading, createChurchWorkspace } = useAuth();
   const navigate = useNavigate();
+
+  // Active Workspace Guard: Auto-redirect if user already has an active church workspace
+  useEffect(() => {
+    if (!loading && church) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [church, loading, navigate]);
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
@@ -540,6 +547,34 @@ export const OnboardingPage: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  if (loading || church) {
+    return (
+      <div
+        className={styles.onboardingRoot}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            color: "#64748B",
+            fontSize: "0.95rem",
+            fontWeight: 500,
+          }}
+        >
+          <Loader2 className={styles.spinner} size={22} />
+          <span>Verifying workspace credentials...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.onboardingRoot}>

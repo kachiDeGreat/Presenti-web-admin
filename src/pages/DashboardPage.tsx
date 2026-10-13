@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   Wifi,
   MapPin,
@@ -7,23 +7,24 @@ import {
   ArrowUpRight,
   Radio,
   Trash2,
-} from 'lucide-react';
-import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 import {
   subscribeToAttendance,
   clearAllAttendance,
-} from '../services/dataService';
-import type { AttendanceRecord } from '../types';
-import styles from './DashboardPage.module.css';
+} from "../services/dataService";
+import type { AttendanceRecord } from "../types";
+import styles from "./DashboardPage.module.css";
 
 export const DashboardPage: React.FC = () => {
   const { church } = useAuth();
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [selectedDept, setSelectedDept] = useState<string>('ALL');
-  const [verificationFilter, setVerificationFilter] = useState<'ALL' | 'WIFI_BSSID' | 'GEO_FALLBACK'>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
+  const [selectedDept, setSelectedDept] = useState<string>("ALL");
+  const [verificationFilter, setVerificationFilter] = useState<
+    "ALL" | "WIFI_BSSID" | "GEO_FALLBACK"
+  >("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     if (!church?.id) return;
@@ -35,18 +36,27 @@ export const DashboardPage: React.FC = () => {
 
   // Metric computations (No late concept: attendance window strictly gates sign-in)
   const totalCheckedIn = attendance.length;
-  const wifiVerifiedCount = attendance.filter((a) => a.verificationMethod === 'WIFI_BSSID').length;
-  const geoVerifiedCount = attendance.filter((a) => a.verificationMethod === 'GEO_FALLBACK').length;
-  const activeDepartments = Array.from(new Set(attendance.map((a) => a.department))).length;
+  const wifiVerifiedCount = attendance.filter(
+    (a) => a.verificationMethod === "WIFI_BSSID",
+  ).length;
+  const geoVerifiedCount = attendance.filter(
+    (a) => a.verificationMethod === "GEO_FALLBACK",
+  ).length;
+  const activeDepartments = Array.from(
+    new Set(attendance.map((a) => a.department)),
+  ).length;
   const allDepartments = church?.departments || [];
 
   // Filtered attendance stream
   const filteredRecords = useMemo(() => {
     return attendance.filter((item) => {
-      const matchDept = selectedDept === 'ALL' || item.department === selectedDept;
-      const matchMethod = verificationFilter === 'ALL' || item.verificationMethod === verificationFilter;
+      const matchDept =
+        selectedDept === "ALL" || item.department === selectedDept;
+      const matchMethod =
+        verificationFilter === "ALL" ||
+        item.verificationMethod === verificationFilter;
       const matchSearch =
-        searchQuery.trim() === '' ||
+        searchQuery.trim() === "" ||
         item.memberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.department.toLowerCase().includes(searchQuery.toLowerCase());
       return matchDept && matchMethod && matchSearch;
@@ -55,13 +65,13 @@ export const DashboardPage: React.FC = () => {
 
   // Format punch & sync times with seconds precision
   const formatTimeWithSec = (isoString?: string) => {
-    if (!isoString) return '—';
+    if (!isoString) return "—";
     try {
       const d = new Date(isoString);
       return d.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
       });
     } catch {
       return isoString;
@@ -71,13 +81,13 @@ export const DashboardPage: React.FC = () => {
   // Compute sync latency (delta between device punch and cloud sync)
   const getSyncLatencyInfo = (punchedAt: string, syncedAt?: string) => {
     if (!syncedAt) {
-      return { label: 'Real-time (<1s)', isDelayed: false };
+      return { label: "Real-time (<1s)", isDelayed: false };
     }
     const p = new Date(punchedAt).getTime();
     const s = new Date(syncedAt).getTime();
     const diffSec = Math.max(0, Math.round((s - p) / 1000));
     if (diffSec <= 3) {
-      return { label: 'Real-time (<3s)', isDelayed: false };
+      return { label: "Real-time (<3s)", isDelayed: false };
     }
     if (diffSec < 60) {
       return { label: `+${diffSec}s delay`, isDelayed: true };
@@ -94,27 +104,27 @@ export const DashboardPage: React.FC = () => {
   const handleClearFeed = () => {
     clearAllAttendance();
     setAttendance([]);
-    toast.success('All attendance records cleared.');
+    toast.success("All attendance records cleared.");
   };
 
-  const todayFormatted = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 
   const isWifiConfigured = Boolean(
     church?.beaconConfig?.ssidHint &&
-    church.beaconConfig.ssidHint.trim() !== '' &&
+    church.beaconConfig.ssidHint.trim() !== "" &&
     church?.beaconConfig?.targetBssid &&
-    church.beaconConfig.targetBssid.trim() !== ''
+    church.beaconConfig.targetBssid.trim() !== "",
   );
 
   const isGeoConfigured = Boolean(
     church?.geoFallback &&
     church.geoFallback.radiusMeters > 0 &&
-    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0)
+    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0),
   );
 
   const isFullyConfigured = isWifiConfigured && isGeoConfigured;
@@ -126,13 +136,10 @@ export const DashboardPage: React.FC = () => {
         <div className={styles.headerTitleWrapper}>
           <div className={styles.titleRow}>
             <h1 className={styles.headerTitle}>Live Attendance Feed</h1>
-            <span className={styles.livePill}>
-              <span className={styles.liveDot} />
-              <span>Live</span>
-            </span>
           </div>
           <p className={styles.headerSubtitle}>
-            {todayFormatted} • Real-time workforce verification across premises Wi-Fi & GPS boundaries
+            {todayFormatted} • Real-time workforce verification across premises
+            Wi-Fi & GPS boundaries
           </p>
         </div>
 
@@ -157,7 +164,9 @@ export const DashboardPage: React.FC = () => {
           <div className={styles.anchorAlertLeft}>
             <Radio size={16} color="#D97706" />
             <span>
-              <strong>Presence Anchors Uncalibrated:</strong> Configure organization Wi-Fi and geofence coordinates to activate automated mobile verification.
+              <strong>Presence Anchors Uncalibrated:</strong> Configure
+              organization Wi-Fi and geofence coordinates to activate automated
+              mobile verification.
             </span>
           </div>
           <Link to="/settings/beacon" className={styles.anchorAlertLink}>
@@ -168,21 +177,37 @@ export const DashboardPage: React.FC = () => {
         <div className={styles.anchorActiveBar}>
           <div className={styles.anchorPills}>
             <span className={styles.anchorItem}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10B981' }} />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  backgroundColor: "#10B981",
+                }}
+              />
               <strong>Anchors Active:</strong>
             </span>
             <span className={styles.anchorItem}>
               <Wifi size={13} color="#059669" />
-              <span>Wi-Fi: {church?.beaconConfig?.ssidHint}</span>
+              <span>Wi-Fi: {church?.beaconConfig?.targetBssid}</span>
             </span>
             <span className={styles.anchorItem}>
               <MapPin size={13} color="#2563EB" />
-              <span>Geofence: {church?.geoFallback?.radiusMeters}m perimeter</span>
+              <span>
+                Geofence: {church?.geoFallback?.radiusMeters}m perimeter
+              </span>
             </span>
           </div>
           <Link
             to="/settings/beacon"
-            style={{ color: '#2563EB', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}
+            style={{
+              color: "#2563EB",
+              textDecoration: "none",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
           >
             <span>Manage Anchors</span>
             <ArrowUpRight size={13} />
@@ -195,30 +220,32 @@ export const DashboardPage: React.FC = () => {
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Total Clocked In</span>
           <span className={styles.metricValue}>{totalCheckedIn}</span>
-          <span className={styles.metricSubtext}>Verified on-premise today</span>
+          <span className={styles.metricSubtext}>
+            Verified on-premise today
+          </span>
         </div>
 
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Wi-Fi Verified</span>
-          <span className={styles.metricValue} style={{ color: '#059669' }}>
+          <span className={styles.metricValue} style={{ color: "#059669" }}>
             {wifiVerifiedCount}
           </span>
           <span className={styles.metricSubtext}>
             {totalCheckedIn > 0
               ? `${Math.round((wifiVerifiedCount / totalCheckedIn) * 100)}% via router hardware`
-              : 'Primary presence anchor'}
+              : "Primary presence anchor"}
           </span>
         </div>
 
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>GPS Geofence Verified</span>
-          <span className={styles.metricValue} style={{ color: '#2563EB' }}>
+          <span className={styles.metricValue} style={{ color: "#2563EB" }}>
             {geoVerifiedCount}
           </span>
           <span className={styles.metricSubtext}>
             {totalCheckedIn > 0
               ? `${Math.round((geoVerifiedCount / totalCheckedIn) * 100)}% via 10m perimeter`
-              : 'Fail-safe presence anchor'}
+              : "Fail-safe presence anchor"}
           </span>
         </div>
 
@@ -237,20 +264,22 @@ export const DashboardPage: React.FC = () => {
         <div className={styles.deptScroller}>
           <button
             type="button"
-            onClick={() => setSelectedDept('ALL')}
-            className={`${styles.deptChip} ${selectedDept === 'ALL' ? styles.deptChipActive : ''}`}
+            onClick={() => setSelectedDept("ALL")}
+            className={`${styles.deptChip} ${selectedDept === "ALL" ? styles.deptChipActive : ""}`}
           >
             <span>All Departments</span>
             <span className={styles.deptChipBadge}>{attendance.length}</span>
           </button>
           {allDepartments.map((dept) => {
-            const count = attendance.filter((a) => a.department === dept).length;
+            const count = attendance.filter(
+              (a) => a.department === dept,
+            ).length;
             return (
               <button
                 key={dept}
                 type="button"
                 onClick={() => setSelectedDept(dept)}
-                className={`${styles.deptChip} ${selectedDept === dept ? styles.deptChipActive : ''}`}
+                className={`${styles.deptChip} ${selectedDept === dept ? styles.deptChipActive : ""}`}
               >
                 <span>{dept}</span>
                 <span className={styles.deptChipBadge}>{count}</span>
@@ -276,22 +305,22 @@ export const DashboardPage: React.FC = () => {
             <div className={styles.statusFilterGroup}>
               <button
                 type="button"
-                onClick={() => setVerificationFilter('ALL')}
-                className={`${styles.statusFilterBtn} ${verificationFilter === 'ALL' ? styles.statusFilterBtnActive : ''}`}
+                onClick={() => setVerificationFilter("ALL")}
+                className={`${styles.statusFilterBtn} ${verificationFilter === "ALL" ? styles.statusFilterBtnActive : ""}`}
               >
                 All Check-Ins
               </button>
               <button
                 type="button"
-                onClick={() => setVerificationFilter('WIFI_BSSID')}
-                className={`${styles.statusFilterBtn} ${verificationFilter === 'WIFI_BSSID' ? styles.statusFilterBtnActive : ''}`}
+                onClick={() => setVerificationFilter("WIFI_BSSID")}
+                className={`${styles.statusFilterBtn} ${verificationFilter === "WIFI_BSSID" ? styles.statusFilterBtnActive : ""}`}
               >
                 Wi-Fi
               </button>
               <button
                 type="button"
-                onClick={() => setVerificationFilter('GEO_FALLBACK')}
-                className={`${styles.statusFilterBtn} ${verificationFilter === 'GEO_FALLBACK' ? styles.statusFilterBtnActive : ''}`}
+                onClick={() => setVerificationFilter("GEO_FALLBACK")}
+                className={`${styles.statusFilterBtn} ${verificationFilter === "GEO_FALLBACK" ? styles.statusFilterBtnActive : ""}`}
               >
                 GPS Geofence
               </button>
@@ -299,12 +328,16 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className={styles.recordCountPill}>
-            Showing {filteredRecords.length} {filteredRecords.length === 1 ? 'record' : 'records'}
+            Showing {filteredRecords.length}{" "}
+            {filteredRecords.length === 1 ? "record" : "records"}
           </div>
         </div>
 
         {/* Clean Data Table */}
-        <div className="data-table-container" style={{ border: 'none', borderRadius: 0 }}>
+        <div
+          className="data-table-container"
+          style={{ border: "none", borderRadius: 0 }}
+        >
           <table className="data-table">
             <thead>
               <tr>
@@ -320,46 +353,65 @@ export const DashboardPage: React.FC = () => {
                 <tr>
                   <td colSpan={5}>
                     <div className={styles.emptyState}>
-                      <div className={styles.emptyStateTitle}>No check-ins found</div>
+                      <div className={styles.emptyStateTitle}>
+                        No check-ins found
+                      </div>
                       <div className={styles.emptyStateSub}>
                         {attendance.length === 0
-                          ? 'No attendance records logged for today yet. When staff or team members punch in from the mobile app, verification events stream here in real time.'
-                          : 'No entries match your search or filter criteria.'}
+                          ? "No attendance records logged for today yet. When staff or team members punch in from the mobile app, verification events stream here in real time."
+                          : "No entries match your search or filter criteria."}
                       </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((item) => {
-                  const latency = getSyncLatencyInfo(item.punchedAt, item.syncedAt);
+                  const latency = getSyncLatencyInfo(
+                    item.punchedAt,
+                    item.syncedAt,
+                  );
 
                   return (
                     <tr key={item.id}>
                       <td>
                         <div className={styles.memberNameCol}>
-                          <span className={styles.memberName}>{item.memberName}</span>
-                          <span className={styles.memberDeptTag}>{item.department}</span>
+                          <span className={styles.memberName}>
+                            {item.memberName}
+                          </span>
+                          <span className={styles.memberDeptTag}>
+                            {item.department}
+                          </span>
                         </div>
                       </td>
 
                       <td>
                         <div className={styles.timeDisplay}>
                           <span>{formatTimeWithSec(item.punchedAt)}</span>
-                          <span className={styles.timeSubBadge}>device stamp</span>
+                          <span className={styles.timeSubBadge}>
+                            device stamp
+                          </span>
                         </div>
                       </td>
 
                       <td>
                         <div className={styles.timeDisplay}>
-                          <span>{formatTimeWithSec(item.syncedAt || item.punchedAt)}</span>
-                          <span className={styles.timeSubBadge}>db received</span>
+                          <span>
+                            {formatTimeWithSec(item.syncedAt || item.punchedAt)}
+                          </span>
+                          <span className={styles.timeSubBadge}>
+                            db received
+                          </span>
                         </div>
                       </td>
 
                       <td>
                         <span
-                          className={`badge ${!latency.isDelayed ? 'badge-success' : 'badge-warning'}`}
-                          title={!latency.isDelayed ? 'Real-time sync' : 'Buffered offline before sync'}
+                          className={`badge ${!latency.isDelayed ? "badge-success" : "badge-warning"}`}
+                          title={
+                            !latency.isDelayed
+                              ? "Real-time sync"
+                              : "Buffered offline before sync"
+                          }
                         >
                           {latency.label}
                         </span>
@@ -367,9 +419,11 @@ export const DashboardPage: React.FC = () => {
 
                       <td>
                         <span
-                          className={`badge ${item.verificationMethod === 'WIFI_BSSID' ? 'badge-success' : 'badge-info'}`}
+                          className={`badge ${item.verificationMethod === "WIFI_BSSID" ? "badge-success" : "badge-info"}`}
                         >
-                          {item.verificationMethod === 'WIFI_BSSID' ? 'Wi-Fi Anchor' : 'GPS Geofence'}
+                          {item.verificationMethod === "WIFI_BSSID"
+                            ? "Wi-Fi Anchor"
+                            : "GPS Geofence"}
                         </span>
                       </td>
                     </tr>

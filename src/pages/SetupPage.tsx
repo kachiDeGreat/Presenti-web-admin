@@ -297,10 +297,6 @@ export const SetupPage: React.FC = () => {
                   )}
                 </button>
               </div>
-              <span className={styles.fieldHelp}>
-                Permanently assigned system identifier. Members and personnel
-                enter this code into the mobile app to pair with your branch.
-              </span>
             </div>
           </div>
         </div>

@@ -50,8 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize Auth state
   useEffect(() => {
+    let isMounted = true;
+
     if (isFirebaseConfigured && auth) {
       const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+        if (!isMounted) return;
         if (fbUser) {
           const profile: UserProfile = {
             uid: fbUser.uid,
@@ -60,34 +63,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             photoURL: fbUser.photoURL,
             emailVerified: fbUser.emailVerified,
           };
-          setUser(profile);
-          const churchData = await fetchChurchDoc(fbUser.uid);
-          setChurch(churchData);
+          // Fetch church document FIRST before committing user to state
+          const churchData = await fetchChurchDoc(fbUser.uid, fbUser.email);
+          if (isMounted) {
+            setUser(profile);
+            setChurch(churchData);
+            setLoading(false);
+          }
         } else {
-          setUser(null);
-          setChurch(null);
+          if (isMounted) {
+            setUser(null);
+            setChurch(null);
+            setLoading(false);
+          }
         }
-        setLoading(false);
       });
-      return () => unsubscribe();
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
     } else {
       // Local session restoration
       const activeSession = localStorage.getItem(SESSION_KEY);
       if (activeSession) {
         try {
           const profile: UserProfile = JSON.parse(activeSession);
-          setUser(profile);
-          fetchChurchDoc(profile.uid).then((c) => setChurch(c));
+          fetchChurchDoc(profile.uid, profile.email).then((c) => {
+            if (isMounted) {
+              setUser(profile);
+              setChurch(c);
+              setLoading(false);
+            }
+          });
         } catch {
           localStorage.removeItem(SESSION_KEY);
-          setUser(null);
-          setChurch(null);
+          if (isMounted) {
+            setUser(null);
+            setChurch(null);
+            setLoading(false);
+          }
         }
       } else {
-        setUser(null);
-        setChurch(null);
+        if (isMounted) {
+          setUser(null);
+          setChurch(null);
+          setLoading(false);
+        }
       }
-      setLoading(false);
+      return () => {
+        isMounted = false;
+      };
     }
   }, []);
 
@@ -101,14 +126,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: cred.user.photoURL,
         emailVerified: cred.user.emailVerified,
       };
-      setUser(profile);
 
-      const existingChurch = await fetchChurchDoc(cred.user.uid);
+      // CRITICAL: Await church lookup BEFORE updating React state to eliminate the onboarding screen flash
+      const existingChurch = await fetchChurchDoc(cred.user.uid, cred.user.email);
+      setUser(profile);
+      setChurch(existingChurch);
+
       if (existingChurch) {
-        setChurch(existingChurch);
         return { isNewUser: false, churchExists: true };
       } else {
-        setChurch(null);
         return { isNewUser: true, churchExists: false };
       }
     } else {
@@ -120,11 +146,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
         emailVerified: true,
       };
+      const existing = await fetchChurchDoc(mockGoogleProfile.uid, mockGoogleProfile.email);
       setUser(mockGoogleProfile);
+      setChurch(existing);
       localStorage.setItem(SESSION_KEY, JSON.stringify(mockGoogleProfile));
-      const existing = await fetchChurchDoc(mockGoogleProfile.uid);
       if (existing) {
-        setChurch(existing);
         return { isNewUser: false, churchExists: true };
       }
       return { isNewUser: true, churchExists: false };
@@ -143,8 +169,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: cred.user.photoURL,
         emailVerified: cred.user.emailVerified,
       };
+      const churchData = await fetchChurchDoc(cred.user.uid, cred.user.email);
       setUser(profile);
-      const churchData = await fetchChurchDoc(cred.user.uid);
       setChurch(churchData);
     } else {
       const accountsRaw = localStorage.getItem(ACCOUNTS_KEY);
@@ -166,8 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: found.displayName,
       };
 
+      const c = await fetchChurchDoc(found.uid, found.email);
       setUser(profile);
-      const c = await fetchChurchDoc(found.uid);
       setChurch(c);
       localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
     }
@@ -198,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         branchName: payload.branchName.trim(),
         churchCode: cleanCode,
         adminUids: [cred.user.uid],
+        adminEmail: cleanEmail,
         departments: [
           'Engineering & Tech',
           'Operations & Logistics',
@@ -259,6 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         branchName: payload.branchName.trim(),
         churchCode: cleanCode,
         adminUids: [newUid],
+        adminEmail: cleanEmail,
         departments: [
           'Engineering & Tech',
           'Operations & Logistics',
@@ -299,6 +327,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...data,
       id: user.uid,
       adminUids: [user.uid],
+      adminEmail: data.adminEmail || user.email || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
