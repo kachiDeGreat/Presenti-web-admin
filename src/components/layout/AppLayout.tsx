@@ -262,7 +262,7 @@ export const AppLayout: React.FC = () => {
                 Wi-Fi:{" "}
                 <strong>
                   {isWifiConfigured
-                    ? church?.beaconConfig?.ssidHint
+                    ? church?.beaconConfig?.targetBssid
                     : "Unconfigured"}
                 </strong>
               </span>
