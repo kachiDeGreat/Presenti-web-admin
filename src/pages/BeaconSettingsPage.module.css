@@ -718,3 +718,317 @@
   margin-top: 2px;
 }
 
+/* ====================================================================
+   MOBILE QR CALIBRATION STATION
+   ==================================================================== */
+.qrStationCard {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 1.5px solid #CBD5E1;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.qrStationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.qrStationTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.qrStationIconBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.qrStationTitleGroup h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.qrStationTitleGroup p {
+  font-size: 0.85rem;
+  color: #64748B;
+  margin: 2px 0 0 0;
+}
+
+.qrLiveListeningPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 999px;
+  color: #059669;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pulsingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10B981;
+  animation: pulseBeacon 1.8s infinite;
+}
+
+@keyframes pulseBeacon {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.qrStationContent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+@media (max-width: 860px) {
+  .qrStationContent {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}
+
+.qrCodeFrame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: #FFFFFF;
+  border: 2px solid #E2E8F0;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  gap: 14px;
+}
+
+.qrSvgWrapper {
+  padding: 10px;
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrCodeOrgBadge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0284C7;
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.qrStepsGuide {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.qrStepItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.qrStepNumber {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #EFF6FF;
+  border: 1.5px solid #BFDBFE;
+  color: #2563EB;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.qrStepText h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 3px 0;
+}
+
+.qrStepText p {
+  font-size: 0.825rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* CONNECTED / CALIBRATING IN REAL TIME CARD */
+.qrConnectedCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 44px 24px;
+  background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+  border: 2px dashed #86EFAC;
+  border-radius: 20px;
+  gap: 16px;
+}
+
+.connectedPulseRing {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background-color: #DCFCE7;
+  color: #16A34A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulseRing 2s infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
+.connectedStatusTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.connectedStatusDesc {
+  font-size: 0.9rem;
+  color: #475569;
+  max-width: 540px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.restartSessionBtn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.restartSessionBtn:hover {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+/* OVERVIEW ACTION BUTTON */
+.recalibrateActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.recalibrateActionBtn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+/* MANUAL OVERRIDE ACCORDION */
+.manualAccordionBox {
+  margin-top: 16px;
+  border: 1px solid #CBD5E1;
+  border-radius: 14px;
+  background-color: #FFFFFF;
+  overflow: hidden;
+}
+
+.manualAccordionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background-color: #F8FAFC;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  transition: background-color 0.15s ease;
+}
+
+.manualAccordionHeader:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.manualAccordionBody {
+  padding: 24px;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+
