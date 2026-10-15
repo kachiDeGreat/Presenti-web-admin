@@ -177,6 +177,8 @@ export const BeaconSettingsPage: React.FC = () => {
               "Premises anchors successfully calibrated via mobile device!",
             );
             setViewMode("OVERVIEW");
+          } else if (!isInitialMount && (data.status === "DISCONNECTED" || data.status === "CANCELLED")) {
+            toast.info("Mobile device disconnected from calibration session.");
           }
         }
       }
@@ -713,10 +715,10 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.qrStepItem}>
                   <div className={styles.qrStepNumber}>2</div>
                   <div className={styles.qrStepText}>
-                    <h4>Press &amp; Hold the Logo for 3 Seconds</h4>
+                    <h4>Press &amp; Hold the Logo for 5 Seconds</h4>
                     <p>
                       On the mobile sign-in / welcome screen, press and hold the{" "}
-                      <strong>Presenti Logo</strong> for 3 seconds. The device will vibrate and instantly launch the{" "}
+                      <strong>Presenti Logo</strong> for 5 seconds. The device will vibrate and instantly launch the{" "}
                       <strong>Calibration QR Scanner</strong>.
                     </p>
                     <p
