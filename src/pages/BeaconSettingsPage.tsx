@@ -59,6 +59,49 @@ export const BeaconSettingsPage: React.FC = () => {
   const [manualOpen, setManualOpen] = useState(false);
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [copiedMac, setCopiedMac] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Browser Geolocation Pickup
+  const handleUseCurrentLocation = () => {
+    setIsLocating(true);
+
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation API is not supported by your browser.");
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = parseFloat(position.coords.latitude.toFixed(6));
+        const lng = parseFloat(position.coords.longitude.toFixed(6));
+        setLatitude(lat);
+        setLongitude(lng);
+        setIsLocating(false);
+        toast.success(`Current location locked (${lat}, ${lng})!`);
+
+        try {
+          const { reverseGeocode } = await import("../services/geocodingService");
+          const geo = await reverseGeocode(lat, lng);
+          if (geo?.displayName) {
+            setPinnedLocationName(geo.displayName);
+          }
+        } catch {
+          // ignore
+        }
+      },
+      (err) => {
+        console.warn("Geolocation error:", err);
+        const msg =
+          err.code === 1
+            ? "Location access denied. Please grant permission in browser settings."
+            : "Unable to acquire GPS lock. You can drag the pin on the map directly or search venue.";
+        toast.error(msg);
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   // Initialize data from church profile
   useEffect(() => {
@@ -662,6 +705,8 @@ export const BeaconSettingsPage: React.FC = () => {
                 currentLat={latitude}
                 currentLng={longitude}
                 locationLabel={pinnedLocationName}
+                isLocating={isLocating}
+                onUseCurrentLocation={handleUseCurrentLocation}
                 onCoordinatesChange={(lat, lng, label) => {
                   setLatitude(lat);
                   setLongitude(lng);
