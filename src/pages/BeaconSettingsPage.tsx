@@ -701,19 +701,19 @@ export const BeaconSettingsPage: React.FC = () => {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 6,
-                    marginTop: 8,
-                    padding: "6px 12px",
+                    gap: 8,
+                    marginTop: 10,
+                    padding: "8px 14px",
                     borderRadius: 8,
-                    backgroundColor: "#FEF3C7",
-                    border: "1px solid #FCD34D",
-                    color: "#92400E",
-                    fontSize: "0.78rem",
+                    backgroundColor: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
+                    color: "#1E40AF",
+                    fontSize: "0.82rem",
                     fontWeight: 600,
                   }}
                 >
-                  <Wifi size={14} color="#D97706" />
-                  <span>Phone Wi-Fi &amp; GPS must be ON to scan networks</span>
+                  <Smartphone size={16} color="#2563EB" />
+                  <span>On Your Mobile Phone: Turn ON Wi-Fi &amp; Location before scanning</span>
                 </div>
               </div>
 
@@ -722,9 +722,9 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.qrStepItem}>
                   <div className={styles.qrStepNumber}>1</div>
                   <div className={styles.qrStepText}>
-                    <h4>Turn ON Wi-Fi &amp; GPS, then Open App</h4>
+                    <h4>On Your Mobile Phone: Turn ON Wi-Fi &amp; GPS</h4>
                     <p>
-                      On your smartphone, swipe down and ensure both <strong>Wi-Fi</strong> and <strong>Location (GPS)</strong> are toggled <strong>ON</strong>. Then open the Presenti app.
+                      Before scanning, pick up your <strong>mobile phone</strong>, swipe down from the top, and ensure your phone's <strong>Wi-Fi</strong> and <strong>Location (GPS)</strong> toggles are switched <strong>ON</strong>. (Your computer desktop does not need Wi-Fi or GPS). Then open the Presenti app.
                     </p>
                   </div>
                 </div>
