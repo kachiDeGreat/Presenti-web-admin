@@ -34,7 +34,7 @@ This repository hosts the **Admin Web Portal**, the centralized administrative d
 
 ### 3. QR Mobile Calibration Gateway
 - **Live Handshake Bridge:** Generates encrypted, time-sensitive QR codes allowing administrators to link their mobile app directly to the web portal in real-time.
-- **Remote Mobile Calibration:** Uses the mobile device's physical radio hardware to scan on-site Wi-Fi BSSIDs and GPS coordinates, instantly syncing premises anchors back to the web portal.
+- **Remote Mobile Calibration:** Activated via a secret 3-second press-and-hold on the mobile app logo (completely invisible to regular workers). Scans on-site Wi-Fi BSSIDs and GPS coordinates, instantly syncing premises anchors back to the web portal.
 
 ### 4. Policy & Attendance Window Engine
 - **Configurable Service Days:** Multi-day selection (Sundays, Wednesdays, weekdays) matching organizational schedules.

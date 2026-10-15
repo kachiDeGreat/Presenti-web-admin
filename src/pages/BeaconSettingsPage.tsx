@@ -713,13 +713,11 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.qrStepItem}>
                   <div className={styles.qrStepNumber}>2</div>
                   <div className={styles.qrStepText}>
-                    <h4>Tap &quot;Administrator? Calibrate Premises&quot;</h4>
+                    <h4>Press &amp; Hold the Logo for 3 Seconds</h4>
                     <p>
-                      On the mobile welcome screen, tap{" "}
-                      <strong>
-                        &quot;Administrator? Calibrate Premises&quot;
-                      </strong>{" "}
-                      below the Google button (no sign-in required).
+                      On the mobile sign-in / welcome screen, press and hold the{" "}
+                      <strong>Presenti Logo</strong> for 3 seconds. The device will vibrate and instantly launch the{" "}
+                      <strong>Calibration QR Scanner</strong>.
                     </p>
                     <p
                       style={{
@@ -729,10 +727,8 @@ export const BeaconSettingsPage: React.FC = () => {
                       }}
                     >
                       <em>
-                        Note: If the phone is already logged into a workforce
-                        member account, simply tap <strong>Sign Out</strong> at
-                        the bottom of the dashboard or tap the{" "}
-                        <strong>Calibrate</strong> chip.
+                        Secret admin gesture — completely invisible to regular workers for security.
+                        (If already signed in, you can also press and hold the header logo on the dashboard).
                       </em>
                     </p>
                   </div>
