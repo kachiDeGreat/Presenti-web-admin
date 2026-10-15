@@ -236,6 +236,25 @@
   color: #1E293B;
 }
 
+.fieldGroup select {
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid #CBD5E1;
+  padding: 0 14px;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: #FFFFFF;
+  transition: all 150ms ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.fieldGroup select:focus {
+  outline: none;
+  border-color: #0284C7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
 .fieldHint {
   font-size: 0.75rem;
   color: #64748B;
@@ -368,9 +387,47 @@
   z-index: 2;
 }
 
-.inputIconWrapper input {
+.inputIconWrapper input,
+.inputIconWrapper select {
   padding-left: 42px !important;
   width: 100%;
+}
+
+.inputIconWrapper select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.locationGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: 100%;
+}
+
+.subFieldLabel {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 2px;
+}
+
+.placeholderSelect {
+  color: #94A3B8;
+}
+
+.resolvedLocationPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 14px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #166534;
+  width: fit-content;
 }
 
 .autocompleteWrapper {
@@ -1181,6 +1238,9 @@
 
 @media (max-width: 768px) {
   .inputsGrid {
+    grid-template-columns: 1fr;
+  }
+  .locationGrid {
     grid-template-columns: 1fr;
   }
   .stepperTrack {

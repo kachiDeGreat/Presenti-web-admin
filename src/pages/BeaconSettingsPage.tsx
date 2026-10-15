@@ -51,6 +51,7 @@ export const BeaconSettingsPage: React.FC = () => {
   // Real Wi-Fi Network Scanning
   const [availableNetworks, setAvailableNetworks] = useState<ScannedWifi[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [scannerUnavailable, setScannerUnavailable] = useState(false);
   const [showManualWifi, setShowManualWifi] = useState(false);
 
   // Tier 2: Geolocation Anchor (Google Maps & Satellite)
@@ -73,19 +74,25 @@ export const BeaconSettingsPage: React.FC = () => {
   const [sectionAOpen, setSectionAOpen] = useState<boolean>(true);
   const [sectionBOpen, setSectionBOpen] = useState<boolean>(true);
 
-  // Fetch real physical Wi-Fi scan from local system (never auto-selects or overwrites saved router)
+  // Fetch real physical Wi-Fi scan from local system (available in local dev mode via Vite)
   const scanRealWifi = async () => {
     setIsScanning(true);
+    setScannerUnavailable(false);
     try {
       const res = await fetch("/api/scan-wifi");
-      if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/json")) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.networks)) {
+        if (data.success && Array.isArray(data.networks) && data.networks.length > 0) {
           setAvailableNetworks(data.networks);
+          return;
         }
       }
+      setScannerUnavailable(true);
+      setAvailableNetworks([]);
     } catch {
-      // ignore
+      setScannerUnavailable(true);
+      setAvailableNetworks([]);
     } finally {
       setIsScanning(false);
     }
@@ -692,6 +699,78 @@ export const BeaconSettingsPage: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Mobile App Calibration Helper Card */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      padding: "16px",
+                      backgroundColor: "rgba(2, 132, 199, 0.05)",
+                      border: "1.5px solid #BAE6FD",
+                      borderRadius: "12px",
+                      gap: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "10px",
+                            backgroundColor: "#0284C7",
+                            color: "#FFFFFF",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Radio size={20} />
+                        </div>
+                        <div>
+                          <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0F172A", margin: 0 }}>
+                            Calibrate using Presenti Mobile App (Recommended)
+                          </h4>
+                          <span style={{ fontSize: "0.8rem", color: "#64748B" }}>
+                            Smartphones have direct access to physical Wi-Fi hardware and GPS chips
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          backgroundColor: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          color: "#059669",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <CheckCircle2 size={13} /> Live Cloud Sync Active
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: "0.825rem", color: "#334155", lineHeight: 1.5 }}>
+                      1. Open the <strong>Presenti Mobile App</strong> on your smartphone while on premises.<br />
+                      2. Sign in with your administrator account (or tap <em>Administrator? Calibrate Premises Anchors</em>).<br />
+                      3. Tap your router from the physical Wi-Fi scan list, adjust the geofence map pin, and tap <strong>Save</strong>.<br />
+                      👉 <em>This web page will automatically update in real-time as soon as you save on mobile!</em>
+                    </div>
+
+                    {church?.churchCode && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.825rem", color: "#475569" }}>
+                        <span>Organization Code:</span>
+                        <code style={{ backgroundColor: "#F1F5F9", padding: "2px 8px", borderRadius: "4px", fontWeight: 700, color: "#0284C7" }}>
+                          {church.churchCode}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+
                   {/* OS-Style Native Wi-Fi Drawer Widget */}
                   <div className={styles.osWifiDrawer}>
                     <div className={styles.osWifiTopRow}>
@@ -718,7 +797,7 @@ export const BeaconSettingsPage: React.FC = () => {
                     </div>
 
                     <div className={styles.osWifiList}>
-                      {isScanning && availableNetworks.length === 0 ? (
+                      {isScanning ? (
                         <div
                           style={{
                             padding: "16px",
@@ -761,6 +840,39 @@ export const BeaconSettingsPage: React.FC = () => {
                             </div>
                           );
                         })
+                      ) : scannerUnavailable ? (
+                        <div
+                          style={{
+                            padding: "12px 14px",
+                            backgroundColor: "rgba(15, 23, 42, 0.6)",
+                            borderRadius: "8px",
+                            border: "1px dashed rgba(56, 189, 248, 0.25)",
+                            margin: "4px 0",
+                            fontSize: "0.82rem",
+                            lineHeight: "1.5",
+                            color: "#94A3B8",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              color: "#38BDF8",
+                              fontWeight: 600,
+                              marginBottom: "4px",
+                            }}
+                          >
+                            <Info size={14} />
+                            <span>Live Cloud Environment Detected</span>
+                          </div>
+                          <p style={{ margin: "0 0 6px 0", fontSize: "0.8rem" }}>
+                            Web browsers prevent cloud-hosted websites (like Vercel) from directly scanning nearby Wi-Fi radio hardware for privacy and security.
+                          </p>
+                          <p style={{ margin: 0, color: "#CBD5E1", fontSize: "0.8rem" }}>
+                            👉 Please enter your router&apos;s <strong>SSID</strong> and <strong>MAC (BSSID)</strong> directly in the fields below.
+                          </p>
+                        </div>
                       ) : (
                         <div
                           style={{
@@ -770,8 +882,7 @@ export const BeaconSettingsPage: React.FC = () => {
                             fontSize: "0.825rem",
                           }}
                         >
-                          No networks detected. Click refresh icon to scan
-                          again.
+                          No networks detected. Click refresh icon to scan again.
                         </div>
                       )}
                     </div>
@@ -781,9 +892,34 @@ export const BeaconSettingsPage: React.FC = () => {
                       onClick={() => setShowManualWifi(!showManualWifi)}
                     >
                       {showManualWifi
-                        ? "Hide manual entry"
-                        : "All Networks / Manual MAC Entry"}
+                        ? "Hide MAC address tips"
+                        : "Need help finding your Router's MAC (BSSID)?"}
                     </div>
+
+                    {showManualWifi && (
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          padding: "12px",
+                          backgroundColor: "rgba(15, 23, 42, 0.5)",
+                          borderRadius: "6px",
+                          fontSize: "0.8rem",
+                          color: "#CBD5E1",
+                          lineHeight: "1.6",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, color: "#F8FAFC", marginBottom: "4px" }}>
+                          Ways to find your router MAC (BSSID):
+                        </div>
+                        <ul style={{ paddingLeft: "18px", margin: 0 }}>
+                          <li><strong>Physical Router Sticker:</strong> Look for <em>MAC</em> or <em>BSSID</em> on the label under/behind your router.</li>
+                          <li><strong>Windows PC:</strong> Open CMD and run <code style={{ backgroundColor: "#1E293B", padding: "1px 4px", borderRadius: "3px" }}>netsh wlan show networks mode=bssid</code></li>
+                          <li><strong>Mac:</strong> Hold <code style={{ backgroundColor: "#1E293B", padding: "1px 4px", borderRadius: "3px" }}>Option (⌥)</code> and click the Wi-Fi icon in the top menu bar.</li>
+                          <li><strong>Linux:</strong> Run <code style={{ backgroundColor: "#1E293B", padding: "1px 4px", borderRadius: "3px" }}>nmcli dev wifi list</code></li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
 
                   {/* Configured Wi-Fi Summary Inputs */}

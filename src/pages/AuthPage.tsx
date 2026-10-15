@@ -37,20 +37,8 @@ export const AuthPage: React.FC = () => {
     e.stopPropagation();
     setIsGoogleLoading(true);
 
-    let isDone = false;
-    // 25-second timeout guard
-    const timeoutTimer = setTimeout(() => {
-      if (!isDone) {
-        isDone = true;
-        setIsGoogleLoading(false);
-        toast.warn("Google sign-in timed out. Please try again.");
-      }
-    }, 25000);
-
     try {
       const result = await signInWithGoogle();
-      isDone = true;
-      clearTimeout(timeoutTimer);
 
       if (result.churchExists) {
         toast.success(
@@ -64,10 +52,6 @@ export const AuthPage: React.FC = () => {
         navigate("/onboarding", { replace: true });
       }
     } catch (err: unknown) {
-      if (isDone) return;
-      isDone = true;
-      clearTimeout(timeoutTimer);
-
       console.error("Google sign-in error:", err);
       if (err && typeof err === "object" && "code" in err) {
         const fbErr = err as { code: string; message: string };

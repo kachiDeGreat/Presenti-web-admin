@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Copy,
   MapPin,
+  Globe,
   Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -32,131 +33,105 @@ import {
 } from "../utils/formValidation";
 import styles from "./OnboardingPage.module.css";
 
-export interface GeocodedLocation {
-  id: string;
-  name: string;
-  sub: string;
-  displayName: string;
-  lat: number;
-  lng: number;
-}
+export const COUNTRIES = [
+  "Nigeria",
+  "Ghana",
+  "Kenya",
+  "South Africa",
+  "United Kingdom",
+  "United States",
+  "Canada",
+  "Australia",
+  "Germany",
+  "France",
+  "United Arab Emirates",
+  "India",
+  "Rwanda",
+  "Uganda",
+  "Tanzania",
+  "Cameroon",
+  "Other",
+];
 
-// Live geocoding querying Photon (OpenStreetMap) and Open-Meteo in parallel
-async function searchGlobalLocations(
-  query: string,
-): Promise<GeocodedLocation[]> {
-  const clean = query.trim();
-  if (clean.length < 2) return [];
+export const NIGERIA_STATES = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT - Abuja",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
 
-  const results: GeocodedLocation[] = [];
-  const seen = new Set<string>();
-
-  const addLocation = (
-    id: string,
-    name: string,
-    state?: string,
-    country?: string,
-    district?: string,
-    lat?: number,
-    lng?: number,
-  ) => {
-    if (typeof lat !== "number" || typeof lng !== "number" || !name) return;
-
-    let cleanState = state || "";
-    if (
-      country === "Nigeria" &&
-      cleanState &&
-      !cleanState.toLowerCase().includes("state") &&
-      !cleanState.toLowerCase().includes("fct")
-    ) {
-      cleanState = `${cleanState} State`;
-    }
-
-    const subList: string[] = [];
-    if (district && district.toLowerCase() !== name.toLowerCase()) {
-      subList.push(district);
-    }
-    if (cleanState) subList.push(cleanState);
-    if (country) subList.push(country);
-
-    const sub = subList.join(", ");
-    const displayList = [name];
-    if (cleanState && cleanState.toLowerCase() !== name.toLowerCase()) {
-      displayList.push(cleanState);
-    }
-    if (country) displayList.push(country);
-    const displayName = displayList.join(", ");
-
-    const key = `${name.toLowerCase()}|${cleanState.toLowerCase()}|${country?.toLowerCase() || ""}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      results.push({
-        id,
-        name,
-        sub,
-        displayName,
-        lat: Number(lat.toFixed(5)),
-        lng: Number(lng.toFixed(5)),
-      });
-    }
-  };
-
-  try {
-    const [photonRes, meteoRes] = await Promise.allSettled([
-      fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(clean)}&limit=10`,
-      ).then((r) => (r.ok ? r.json() : null)),
-      fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-          clean,
-        )}&count=10&language=en&format=json`,
-      ).then((r) => (r.ok ? r.json() : null)),
-    ]);
-
-    if (
-      photonRes.status === "fulfilled" &&
-      photonRes.value &&
-      Array.isArray(photonRes.value.features)
-    ) {
-      for (const f of photonRes.value.features) {
-        const p = f.properties || {};
-        const coords = f.geometry?.coordinates || [];
-        const name = p.name || p.city || p.district || clean;
-        addLocation(
-          `ph-${p.osm_id || Math.random()}`,
-          name,
-          p.state,
-          p.country,
-          p.district || p.county,
-          coords[1],
-          coords[0],
-        );
-      }
-    }
-
-    if (
-      meteoRes.status === "fulfilled" &&
-      meteoRes.value &&
-      Array.isArray(meteoRes.value.results)
-    ) {
-      for (const item of meteoRes.value.results) {
-        addLocation(
-          `om-${item.id}`,
-          item.name,
-          item.admin1,
-          item.country,
-          item.admin2,
-          item.latitude,
-          item.longitude,
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Geocoding lookup error:", err);
-  }
-
-  return results.slice(0, 8);
-}
+export const DEFAULT_STATE_COORDS: Record<string, { lat: number; lng: number }> = {
+  Abia: { lat: 5.532, lng: 7.486 },
+  Adamawa: { lat: 9.3265, lng: 12.4485 },
+  "Akwa Ibom": { lat: 5.0377, lng: 7.9128 },
+  Anambra: { lat: 6.2209, lng: 7.0674 },
+  Bauchi: { lat: 10.3159, lng: 9.8442 },
+  Bayelsa: { lat: 4.7719, lng: 6.0699 },
+  Benue: { lat: 7.7322, lng: 8.5214 },
+  Borno: { lat: 11.8333, lng: 13.15 },
+  "Cross River": { lat: 4.975, lng: 8.3417 },
+  Delta: { lat: 5.5325, lng: 5.8987 },
+  Ebonyi: { lat: 6.2649, lng: 8.0137 },
+  Edo: { lat: 6.335, lng: 5.6037 },
+  Ekiti: { lat: 7.6219, lng: 5.2215 },
+  Enugu: { lat: 6.4584, lng: 7.5464 },
+  "FCT - Abuja": { lat: 9.0765, lng: 7.3986 },
+  Gombe: { lat: 10.2897, lng: 11.1673 },
+  Imo: { lat: 5.4836, lng: 7.0333 },
+  Jigawa: { lat: 12.228, lng: 9.5616 },
+  Kaduna: { lat: 10.5105, lng: 7.4165 },
+  Kano: { lat: 12.0022, lng: 8.592 },
+  Katsina: { lat: 12.9908, lng: 7.6018 },
+  Kebbi: { lat: 12.4504, lng: 4.1999 },
+  Kogi: { lat: 7.7969, lng: 6.7408 },
+  Kwara: { lat: 8.4966, lng: 4.5421 },
+  Lagos: { lat: 6.5244, lng: 3.3792 },
+  Nasarawa: { lat: 8.5475, lng: 8.523 },
+  Niger: { lat: 9.9309, lng: 5.5983 },
+  Ogun: { lat: 7.1557, lng: 3.3451 },
+  Ondo: { lat: 7.2571, lng: 5.2058 },
+  Osun: { lat: 7.7827, lng: 4.5418 },
+  Oyo: { lat: 7.3775, lng: 3.947 },
+  Plateau: { lat: 9.9309, lng: 8.8921 },
+  Rivers: { lat: 4.8156, lng: 7.0498 },
+  Sokoto: { lat: 13.0059, lng: 5.2476 },
+  Taraba: { lat: 8.8937, lng: 11.3606 },
+  Yobe: { lat: 12.0, lng: 11.5 },
+  Zamfara: { lat: 12.1222, lng: 6.2236 },
+};
 
 const DEPARTMENT_PRESETS = [
   "Engineering & Technology",
@@ -201,32 +176,10 @@ export const OnboardingPage: React.FC = () => {
   const [adminName, setAdminName] = useState(user?.displayName || "");
   const [adminPhone, setAdminPhone] = useState("");
 
-  // Location Autosuggest State
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState<
-    GeocodedLocation[]
-  >([]);
-  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
-  const locationWrapperRef = useRef<HTMLDivElement>(null);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeSearchQueryRef = useRef<string>("");
-
-  // Close location dropdown when clicking outside & cleanup timer
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        locationWrapperRef.current &&
-        !locationWrapperRef.current.contains(e.target as Node)
-      ) {
-        setShowLocationDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, []);
+  // Structured Location Selection State (Country, State, City)
+  const [country, setCountry] = useState("Nigeria");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
 
   // Keep adminName in sync if user profile loads asynchronously
   useEffect(() => {
@@ -271,44 +224,50 @@ export const OnboardingPage: React.FC = () => {
   const adminNameValidation = adminName ? validatePersonName(adminName) : { isValid: true, error: null };
   const phoneValidation = adminPhone ? validatePhoneNumber(adminPhone) : { isValid: true, error: null };
 
-  // Helper to generate dynamic, unique church code
-  const generateUniqueChurchCode = (org: string, loc: string): string => {
-    let prefix = "CHURCH";
-    const cleanOrg = org.trim();
+  // Helper to generate dynamic, unique organization code (XX-XXX-XXX format)
+  const generateUniqueChurchCode = (
+    org: string,
+    cityVal?: string,
+    stateVal?: string,
+  ): string => {
+    const cleanOrg = org.trim().replace(/[^a-zA-Z0-9\s]/g, "");
+    let prefix = "ORG";
     if (cleanOrg) {
       const words = cleanOrg.split(/\s+/).filter(Boolean);
       if (words.length >= 2) {
-        prefix = words
-          .slice(0, 3)
-          .map((w) => w[0].toUpperCase())
-          .join("");
+        prefix = (words[0][0] + words[1][0]).toUpperCase();
       } else if (words.length === 1) {
-        prefix = words[0].slice(0, 4).toUpperCase();
+        prefix = words[0].slice(0, 2).toUpperCase();
       }
     }
+    if (prefix.length < 2) {
+      prefix = (prefix + "X").slice(0, 2);
+    }
 
-    let suffix = "HQ";
-    const primaryCity = loc.split(",")[0].trim();
-    if (primaryCity) {
-      const branchWords = primaryCity.split(/\s+/).filter(Boolean);
-      if (branchWords.length >= 2) {
-        suffix = branchWords
-          .slice(0, 2)
-          .map((w) => w[0].toUpperCase())
-          .join("");
-      } else if (primaryCity.length >= 2) {
-        suffix = primaryCity.slice(0, 3).toUpperCase();
+    let locStr = (cityVal || stateVal || "").trim().replace(/[^a-zA-Z0-9\s]/g, "");
+    let middle = "HQ0";
+    if (locStr) {
+      const locWords = locStr.split(/\s+/).filter(Boolean);
+      if (locWords.length >= 3) {
+        middle = locWords.slice(0, 3).map((w) => w[0].toUpperCase()).join("");
+      } else if (locWords.length === 2) {
+        middle = (locWords[0].slice(0, 2) + locWords[1][0]).toUpperCase();
+      } else if (locWords.length === 1) {
+        middle = locWords[0].slice(0, 3).toUpperCase();
       }
+    }
+    if (middle.length < 3) {
+      middle = (middle + "HQ").slice(0, 3);
     }
 
     const randomPin = Math.floor(100 + Math.random() * 900);
-    return `${prefix}-${suffix}-${randomPin}`;
+    return `${prefix}-${middle}-${randomPin}`;
   };
 
   const handleRegenerateCode = () => {
-    const code = generateUniqueChurchCode(churchName, branchName);
+    const code = generateUniqueChurchCode(churchName, city, state);
     setChurchCode(code);
-    toast.info(`Generated new unique church code: ${code}`);
+    toast.info(`Generated new unique organization code: ${code}`);
   };
 
   const handleCopyCode = () => {
@@ -317,64 +276,55 @@ export const OnboardingPage: React.FC = () => {
     toast.success(`Copied "${churchCode}" to clipboard!`);
   };
 
-  // Auto-generate code when user inputs names if not yet set
+  // Handlers for organization name and location fields
   const handleChurchNameChange = (val: string) => {
     setChurchName(val);
-    if (!churchCode) {
-      setChurchCode(generateUniqueChurchCode(val, branchName));
+    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
+      setChurchCode(generateUniqueChurchCode(val, city, state));
     }
   };
 
-  const handleBranchNameChange = (val: string) => {
-    setBranchName(val);
-    if (!churchCode) {
-      setChurchCode(generateUniqueChurchCode(churchName, val));
+  const handleCountryChange = (newCountry: string) => {
+    setCountry(newCountry);
+    const newState = newCountry === "Nigeria" ? state : "";
+    if (newCountry !== "Nigeria") {
+      setState("");
     }
+    const fullBranch = [city.trim(), newState.trim(), newCountry.trim()]
+      .filter(Boolean)
+      .join(", ");
+    setBranchName(fullBranch);
 
-    if (searchTimerRef.current) {
-      clearTimeout(searchTimerRef.current);
+    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
+      setChurchCode(generateUniqueChurchCode(churchName, city, newState));
     }
-
-    const query = val.trim();
-    activeSearchQueryRef.current = query;
-
-    if (query.length < 2) {
-      setLocationSuggestions([]);
-      setShowLocationDropdown(false);
-      setIsSearchingLocation(false);
-      return;
-    }
-
-    setIsSearchingLocation(true);
-    setShowLocationDropdown(true);
-
-    searchTimerRef.current = setTimeout(async () => {
-      const results = await searchGlobalLocations(query);
-      if (activeSearchQueryRef.current === query) {
-        setLocationSuggestions(results);
-        setIsSearchingLocation(false);
-        setShowLocationDropdown(true);
-      }
-    }, 280);
   };
 
-  const handleSelectLocation = (loc: GeocodedLocation) => {
-    setBranchName(loc.displayName);
-    setShowLocationDropdown(false);
-    setLocationSuggestions([]);
+  const handleStateChange = (newState: string) => {
+    setState(newState);
+    const fullBranch = [city.trim(), newState.trim(), country.trim()]
+      .filter(Boolean)
+      .join(", ");
+    setBranchName(fullBranch);
 
-    // Update Church Code dynamically
-    if (
-      !churchCode ||
-      churchCode.startsWith("CHURCH-") ||
-      churchCode.includes("-HQ-")
-    ) {
-      setChurchCode(generateUniqueChurchCode(churchName, loc.name));
+    if (newState && DEFAULT_STATE_COORDS[newState]) {
+      setInitialCoords(DEFAULT_STATE_COORDS[newState]);
     }
 
-    // Store initial location coordinates
-    if (loc.lat && loc.lng) {
-      setInitialCoords({ lat: loc.lat, lng: loc.lng });
+    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
+      setChurchCode(generateUniqueChurchCode(churchName, city, newState));
+    }
+  };
+
+  const handleCityChange = (newCity: string) => {
+    setCity(newCity);
+    const fullBranch = [newCity.trim(), state.trim(), country.trim()]
+      .filter(Boolean)
+      .join(", ");
+    setBranchName(fullBranch);
+
+    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
+      setChurchCode(generateUniqueChurchCode(churchName, newCity, state));
     }
   };
 
@@ -427,6 +377,18 @@ export const OnboardingPage: React.FC = () => {
       const orgVal = validateOrgName(churchName);
       if (!orgVal.isValid) {
         toast.error(orgVal.error);
+        return false;
+      }
+      if (!country.trim()) {
+        toast.error("Please select a country.");
+        return false;
+      }
+      if (!state.trim()) {
+        toast.error("Please select or enter a state / region.");
+        return false;
+      }
+      if (!city.trim()) {
+        toast.error("Please enter a city or branch premises area.");
         return false;
       }
       const branchVal = validateBranchName(branchName);
@@ -685,7 +647,7 @@ export const OnboardingPage: React.FC = () => {
             <div className={styles.formSection}>
               <div className={styles.sectionTitle}>Organization Details</div>
               <div className={styles.inputsGrid}>
-                <div className={styles.fieldGroup}>
+                <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
                   <label htmlFor="churchName">
                     Organization / Company Name *
                   </label>
@@ -705,75 +667,83 @@ export const OnboardingPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className={styles.fieldGroup}>
-                  <label htmlFor="branchName">Branch Location & State *</label>
-                  <div
-                    className={`${styles.inputIconWrapper} ${styles.autocompleteWrapper}`}
-                    ref={locationWrapperRef}
-                  >
-                    <MapPin size={16} />
-                    <input
-                      id="branchName"
-                      type="text"
-                      placeholder="e.g. Calabar, Cross River State, Nigeria"
-                      value={branchName}
-                      onChange={(e) => handleBranchNameChange(e.target.value)}
-                      onFocus={() => {
-                        if (branchName.trim().length >= 2) {
-                          setShowLocationDropdown(true);
-                          if (locationSuggestions.length === 0) {
-                            handleBranchNameChange(branchName);
-                          }
-                        }
-                      }}
-                      autoComplete="off"
-                      className={!branchValidation.isValid ? styles.inputError : ""}
-                      required
-                    />
+                <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
+                  <label>Premises Location (Country, State & City) *</label>
+                  <div className={styles.locationGrid}>
+                    <div className={styles.fieldGroup}>
+                      <span className={styles.subFieldLabel}>Country *</span>
+                      <div className={styles.inputIconWrapper}>
+                        <Globe size={16} />
+                        <select
+                          id="country"
+                          value={country}
+                          onChange={(e) => handleCountryChange(e.target.value)}
+                          required
+                        >
+                          {COUNTRIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
 
-                    {showLocationDropdown && (
-                      <div className={styles.suggestionsDropdown}>
-                        {isSearchingLocation ? (
-                          <div className={styles.suggestionSearching}>
-                            <Loader2 size={16} className={styles.spinner} />
-                            <span>Searching global locations...</span>
-                          </div>
-                        ) : locationSuggestions.length > 0 ? (
-                          locationSuggestions.map((loc) => (
-                            <button
-                              key={loc.id}
-                              type="button"
-                              className={styles.suggestionItem}
-                              onClick={() => handleSelectLocation(loc)}
-                            >
-                              <div className={styles.suggestionIconWrapper}>
-                                <MapPin
-                                  size={15}
-                                  className={styles.suggestionIcon}
-                                />
-                              </div>
-                              <div className={styles.suggestionDetails}>
-                                <span className={styles.suggestionMain}>
-                                  {loc.name}
-                                </span>
-                                {loc.sub && (
-                                  <span className={styles.suggestionSub}>
-                                    {loc.sub}
-                                  </span>
-                                )}
-                              </div>
-                            </button>
-                          ))
+                    <div className={styles.fieldGroup}>
+                      <span className={styles.subFieldLabel}>State / Region *</span>
+                      <div className={styles.inputIconWrapper}>
+                        <MapPin size={16} />
+                        {country === "Nigeria" ? (
+                          <select
+                            id="state"
+                            value={state}
+                            onChange={(e) => handleStateChange(e.target.value)}
+                            className={!state ? styles.placeholderSelect : ""}
+                            required
+                          >
+                            <option value="">Select State</option>
+                            {NIGERIA_STATES.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
                         ) : (
-                          <div className={styles.suggestionEmpty}>
-                            No matching locations found for "{branchName.trim()}
-                            "
-                          </div>
+                          <input
+                            id="state"
+                            type="text"
+                            placeholder="e.g. California"
+                            value={state}
+                            onChange={(e) => handleStateChange(e.target.value)}
+                            required
+                          />
                         )}
                       </div>
-                    )}
+                    </div>
+
+                    <div className={styles.fieldGroup}>
+                      <span className={styles.subFieldLabel}>City / Area *</span>
+                      <div className={styles.inputIconWrapper}>
+                        <MapPin size={16} />
+                        <input
+                          id="city"
+                          type="text"
+                          placeholder="e.g. Calabar"
+                          value={city}
+                          onChange={(e) => handleCityChange(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-                  {!branchValidation.isValid && (
+
+                  {branchName ? (
+                    <div className={styles.resolvedLocationPill}>
+                      <CheckCircle2 size={13} color="#059669" />
+                      <span>Premises Location: <strong>{branchName}</strong></span>
+                    </div>
+                  ) : null}
+                  {!branchValidation.isValid && branchName && (
                     <span className={styles.fieldErrorText}>
                       <AlertCircle size={12} /> {branchValidation.error}
                     </span>
@@ -787,7 +757,7 @@ export const OnboardingPage: React.FC = () => {
                       id="churchCode"
                       type="text"
                       className={`mono ${!codeValidation.isValid ? styles.inputError : ""}`}
-                      placeholder="e.g. ACME-HQ"
+                      placeholder="e.g. AC-LAG-482"
                       value={churchCode}
                       onChange={(e) =>
                         setChurchCode(e.target.value.toUpperCase())
