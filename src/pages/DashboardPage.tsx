@@ -122,9 +122,13 @@ export const DashboardPage: React.FC = () => {
   );
 
   const isGeoConfigured = Boolean(
-    church?.geoFallback &&
-    church.geoFallback.radiusMeters > 0 &&
-    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0),
+    church?.geoFallback?.isConfigured ??
+    (
+      church?.geoFallback &&
+      church.geoFallback.radiusMeters > 0 &&
+      (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0) &&
+      isWifiConfigured
+    )
   );
 
   const isFullyConfigured = isWifiConfigured && isGeoConfigured;

@@ -12,6 +12,7 @@ export interface GeoFallback {
   latitude: number;
   longitude: number;
   radiusMeters: number; // e.g. 40
+  isConfigured?: boolean;
 }
 
 export interface PolicySettings {

@@ -44,7 +44,9 @@ export const BeaconSettingsPage: React.FC = () => {
   const [pinnedLocationName, setPinnedLocationName] = useState<string>("");
 
   // View state: OVERVIEW (if already calibrated) vs QR_STATION (to calibrate)
-  const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">("QR_STATION");
+  const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">(
+    "QR_STATION",
+  );
   const [hasInitializedView, setHasInitializedView] = useState<boolean>(false);
 
   // Real-time Calibration Session state
@@ -61,7 +63,7 @@ export const BeaconSettingsPage: React.FC = () => {
   const [copiedMac, setCopiedMac] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
-  // Browser Geolocation Pickup
+  // Browser Geolocation Pickup with graceful desktop fallback
   const handleUseCurrentLocation = () => {
     setIsLocating(true);
 
@@ -71,36 +73,51 @@ export const BeaconSettingsPage: React.FC = () => {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = parseFloat(position.coords.latitude.toFixed(6));
-        const lng = parseFloat(position.coords.longitude.toFixed(6));
-        setLatitude(lat);
-        setLongitude(lng);
-        setIsLocating(false);
-        toast.success(`Current location locked (${lat}, ${lng})!`);
+    const onLocationSuccess = async (position: GeolocationPosition) => {
+      const lat = parseFloat(position.coords.latitude.toFixed(6));
+      const lng = parseFloat(position.coords.longitude.toFixed(6));
+      setLatitude(lat);
+      setLongitude(lng);
+      setIsLocating(false);
+      toast.success(`Current location locked (${lat}, ${lng})!`);
 
-        try {
-          const { reverseGeocode } = await import("../services/geocodingService");
-          const geo = await reverseGeocode(lat, lng);
-          if (geo?.displayName) {
-            setPinnedLocationName(geo.displayName);
-          }
-        } catch {
-          // ignore
+      try {
+        const { reverseGeocode } = await import("../services/geocodingService");
+        const geo = await reverseGeocode(lat, lng);
+        if (geo?.displayName) {
+          setPinnedLocationName(geo.displayName);
         }
-      },
-      (err) => {
-        console.warn("Geolocation error:", err);
-        const msg =
-          err.code === 1
-            ? "Location access denied. Please grant permission in browser settings."
-            : "Unable to acquire GPS lock. You can drag the pin on the map directly or search venue.";
-        toast.error(msg);
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+      } catch {
+        // ignore
+      }
+    };
+
+    const tryFetch = (highAccuracy: boolean) => {
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        (err) => {
+          if (highAccuracy && (err.code === 3 || err.code === 2)) {
+            // High accuracy timed out on desktop browser: retry with network/IP geolocation
+            tryFetch(false);
+            return;
+          }
+          console.warn("Geolocation error:", err);
+          const msg =
+            err.code === 1
+              ? "Location access denied. Please grant permission in browser settings."
+              : "Unable to acquire browser location. You can search your address or drag the pin on the map.";
+          toast.error(msg);
+          setIsLocating(false);
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 5000 : 15000,
+          maximumAge: 300000,
+        },
+      );
+    };
+
+    tryFetch(true);
   };
 
   // Initialize data from church profile
@@ -109,9 +126,12 @@ export const BeaconSettingsPage: React.FC = () => {
       const savedSsid = church.beaconConfig?.ssidHint || "";
       const savedBssid = church.beaconConfig?.targetBssid || "";
       const isGeoSet = Boolean(
-        church.geoFallback &&
-        church.geoFallback.radiusMeters > 0 &&
-        (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0)
+        church.geoFallback?.isConfigured ??
+        (church.geoFallback &&
+          church.geoFallback.radiusMeters > 0 &&
+          (church.geoFallback.latitude !== 0 ||
+            church.geoFallback.longitude !== 0) &&
+          Boolean(savedBssid)),
       );
       const savedLat = isGeoSet ? church.geoFallback!.latitude : 4.975;
       const savedLng = isGeoSet ? church.geoFallback!.longitude : 8.3417;
@@ -138,6 +158,8 @@ export const BeaconSettingsPage: React.FC = () => {
     if (!db || !church?.id) return;
 
     const sessionRef = doc(db, "churches", church.id, "calibration", "session");
+    let isInitialMount = true;
+
     const unsubscribe = onSnapshot(sessionRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -149,12 +171,16 @@ export const BeaconSettingsPage: React.FC = () => {
             platform: data.platform,
           });
 
-          if (data.status === "COMPLETED") {
-            toast.success("Premises anchors successfully calibrated via mobile device!");
+          // Only trigger completion toast when actively calibrated via mobile during session
+          if (!isInitialMount && data.status === "COMPLETED") {
+            toast.success(
+              "Premises anchors successfully calibrated via mobile device!",
+            );
             setViewMode("OVERVIEW");
           }
         }
       }
+      isInitialMount = false;
     });
 
     return () => unsubscribe();
@@ -168,15 +194,59 @@ export const BeaconSettingsPage: React.FC = () => {
     const unsubscribe = onSnapshot(churchRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        if (data?.beaconConfig?.targetBssid) {
-          setTargetBssid(data.beaconConfig.targetBssid);
-          setSsidHint(data.beaconConfig.ssidHint || "");
+        const freshBssid = data?.beaconConfig?.targetBssid || "";
+        const freshSsid = data?.beaconConfig?.ssidHint || "";
+        const freshLat = Number(data?.geoFallback?.latitude ?? 0);
+        const freshLng = Number(data?.geoFallback?.longitude ?? 0);
+        const freshRadius = Number(data?.geoFallback?.radiusMeters ?? 10);
+        const freshIsConfigured = Boolean(
+          data?.geoFallback?.isConfigured ||
+          (freshBssid && freshLat && freshLng),
+        );
+
+        if (freshBssid) setTargetBssid(freshBssid);
+        if (freshSsid) setSsidHint(freshSsid);
+        if (freshLat && freshLng) {
+          setLatitude(freshLat);
+          setLongitude(freshLng);
+          setRadiusMeters(freshRadius);
+
+          // Reverse geocode venue address dynamically so label updates immediately
+          import("../services/geocodingService")
+            .then(({ reverseGeocode }) => {
+              reverseGeocode(freshLat, freshLng)
+                .then((geo) => {
+                  if (geo?.displayName) setPinnedLocationName(geo.displayName);
+                })
+                .catch(() => {});
+            })
+            .catch(() => {});
         }
-        if (data?.geoFallback?.latitude && data?.geoFallback?.longitude) {
-          setLatitude(data.geoFallback.latitude);
-          setLongitude(data.geoFallback.longitude);
-          setRadiusMeters(data.geoFallback.radiusMeters || 10);
-        }
+
+        // Keep local storage in sync
+        const freshChurch: any = {
+          ...church,
+          beaconConfig: {
+            ssidHint: freshSsid || ssidHint,
+            targetBssid: freshBssid || targetBssid,
+          },
+          geoFallback: {
+            latitude: freshLat || latitude,
+            longitude: freshLng || longitude,
+            radiusMeters: freshRadius || radiusMeters,
+            isConfigured: freshIsConfigured,
+          },
+        };
+        try {
+          localStorage.setItem(
+            `sanctuary_church_${church.id}`,
+            JSON.stringify(freshChurch),
+          );
+          localStorage.setItem(
+            "sanctuary_church_data",
+            JSON.stringify(freshChurch),
+          );
+        } catch {}
       }
     });
 
@@ -196,7 +266,7 @@ export const BeaconSettingsPage: React.FC = () => {
             status: "AWAITING_SCAN",
             startedAt: new Date().toISOString(),
           },
-          { merge: true }
+          { merge: true },
         );
       } catch (err) {
         console.warn("Could not set session in Firestore:", err);
@@ -243,6 +313,7 @@ export const BeaconSettingsPage: React.FC = () => {
           latitude: Number(latitude),
           longitude: Number(longitude),
           radiusMeters: Number(radiusMeters),
+          isConfigured: true,
         },
       });
 
@@ -257,21 +328,22 @@ export const BeaconSettingsPage: React.FC = () => {
     }
   };
 
-  // QR Code Payload for mobile pairing
+  // Compact QR Code Payload for instant recognition (<50ms like WhatsApp/Xender)
   const qrPayload = JSON.stringify({
+    t: "CAL",
+    id: church?.id || "",
+    c: church?.churchCode || "ORG",
+    n: church?.branchName || church?.churchName || "Organization",
     type: "CALIBRATE_ANCHORS",
     churchId: church?.id || "",
     churchCode: church?.churchCode || "ORG",
-    churchName: church?.churchName || church?.branchName || "Organization",
-    timestamp: Date.now(),
   });
 
-  const isWifiConfigured = Boolean(
-    targetBssid && targetBssid.trim() !== "" && ssidHint && ssidHint.trim() !== ""
-  );
+  const isWifiConfigured = Boolean(targetBssid && targetBssid.trim() !== "");
 
   const isGeoConfigured = Boolean(
-    radiusMeters > 0 && (latitude !== 0 || longitude !== 0)
+    (radiusMeters > 0 && (latitude !== 0 || longitude !== 0)) ||
+    Boolean(church?.geoFallback?.isConfigured),
   );
 
   return (
@@ -279,11 +351,11 @@ export const BeaconSettingsPage: React.FC = () => {
       {/* Header Section */}
       <div className={styles.headerSection}>
         <div>
-          <h1 className={styles.headerTitle}>
-            Premises Presence Anchors
-          </h1>
+          <h1 className={styles.headerTitle}>Premises Presence Anchors</h1>
           <p className={styles.headerSubtitle}>
-            Calibrate physical premises verification boundaries. Pair with your smartphone to detect hardware Wi-Fi radio airwaves and satellite coordinates.
+            Calibrate physical premises verification boundaries. Pair with your
+            smartphone to detect hardware Wi-Fi radio airwaves and satellite
+            coordinates.
           </p>
         </div>
       </div>
@@ -292,7 +364,12 @@ export const BeaconSettingsPage: React.FC = () => {
       <div className={styles.systemArchitectureBanner}>
         <Radio size={24} color="#2563EB" style={{ flexShrink: 0 }} />
         <div className={styles.systemArchitectureText}>
-          <strong>Dual-Anchor Redundancy:</strong> Worker clock-ins first authenticate via physical router radio hardware (Section A). If the premises router is offline, the mobile app automatically transitions to verifying attendance against the <strong>Geofence Perimeter</strong> in Section B within a <strong>30–45s timeout</strong>.
+          <strong>Dual-Anchor Redundancy:</strong> Worker clock-ins first
+          authenticate via physical router radio hardware (Section A). If the
+          premises router is offline, the mobile app automatically transitions
+          to verifying attendance against the{" "}
+          <strong>Geofence Perimeter</strong> in Section B within a{" "}
+          <strong>20–30s timeout</strong>.
         </div>
       </div>
 
@@ -314,7 +391,8 @@ export const BeaconSettingsPage: React.FC = () => {
                   </span>
                 </div>
                 <p className={styles.collapsedHeaderSub}>
-                  Workers verify attendance against the premises router BSSID with automated GPS geofence failover.
+                  Workers verify attendance against the premises router BSSID
+                  with automated GPS geofence failover.
                 </p>
               </div>
             </div>
@@ -335,7 +413,9 @@ export const BeaconSettingsPage: React.FC = () => {
             <div className={styles.summaryCard}>
               <div className={styles.summaryCardHeader}>
                 <div className={styles.summaryCardTitleGroup}>
-                  <div className={`${styles.summaryCardIcon} ${styles.iconWifi}`}>
+                  <div
+                    className={`${styles.summaryCardIcon} ${styles.iconWifi}`}
+                  >
                     <Wifi size={20} />
                   </div>
                   <div>
@@ -356,14 +436,20 @@ export const BeaconSettingsPage: React.FC = () => {
 
               <div className={styles.summaryDataRows}>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Configured SSID</span>
+                  <span className={styles.summaryDataLabel}>
+                    Configured SSID
+                  </span>
                   <span className={styles.summaryDataValue}>
                     {ssidHint || "Pending Calibration"}
                   </span>
                 </div>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Hardware MAC (BSSID)</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span className={styles.summaryDataLabel}>
+                    Hardware MAC (BSSID)
+                  </span>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
                     <span className={styles.summaryDataValueMono}>
                       {targetBssid || "Pending Calibration"}
                     </span>
@@ -386,9 +472,11 @@ export const BeaconSettingsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Verification Gateway</span>
+                  <span className={styles.summaryDataLabel}>
+                    Verification Gateway
+                  </span>
                   <span className={styles.summaryDataValue}>
-                    Primary · 30–45s Timeout
+                    Primary · 20–30s Timeout
                   </span>
                 </div>
                 <div className={styles.summaryDataRow}>
@@ -421,7 +509,9 @@ export const BeaconSettingsPage: React.FC = () => {
             <div className={styles.summaryCard}>
               <div className={styles.summaryCardHeader}>
                 <div className={styles.summaryCardTitleGroup}>
-                  <div className={`${styles.summaryCardIcon} ${styles.iconGeo}`}>
+                  <div
+                    className={`${styles.summaryCardIcon} ${styles.iconGeo}`}
+                  >
                     <MapPin size={20} />
                   </div>
                   <div>
@@ -442,13 +532,20 @@ export const BeaconSettingsPage: React.FC = () => {
 
               <div className={styles.summaryDataRows}>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Calibrated Venue</span>
+                  <span className={styles.summaryDataLabel}>
+                    Calibrated Venue
+                  </span>
                   <span className={styles.summaryDataValue}>
-                    {pinnedLocationName || church?.branchName || church?.churchName || "Premises Boundary"}
+                    {pinnedLocationName ||
+                      church?.branchName ||
+                      church?.churchName ||
+                      "Premises Boundary"}
                   </span>
                 </div>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Precise Coordinates</span>
+                  <span className={styles.summaryDataLabel}>
+                    Precise Coordinates
+                  </span>
                   <span className={styles.summaryDataValueMono}>
                     {isGeoConfigured
                       ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
@@ -456,7 +553,9 @@ export const BeaconSettingsPage: React.FC = () => {
                   </span>
                 </div>
                 <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Perimeter Boundary</span>
+                  <span className={styles.summaryDataLabel}>
+                    Perimeter Boundary
+                  </span>
                   <span className={styles.summaryDataValue}>
                     {isGeoConfigured
                       ? `${radiusMeters}m radius (${radiusMeters * 2}m diameter)`
@@ -477,7 +576,7 @@ export const BeaconSettingsPage: React.FC = () => {
                   >
                     {isGeoConfigured ? (
                       <>
-                        <CheckCircle2 size={14} /> Active on 30–45s Timeout
+                        <CheckCircle2 size={14} /> Active on 20–30s Timeout
                       </>
                     ) : (
                       <>
@@ -489,12 +588,22 @@ export const BeaconSettingsPage: React.FC = () => {
               </div>
 
               {/* Mini Map Preview */}
-              <div style={{ marginTop: "4px", borderRadius: "10px", overflow: "hidden" }}>
+              <div
+                style={{
+                  marginTop: "4px",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                }}
+              >
                 <GooglePresenceMap
                   latitude={latitude}
                   longitude={longitude}
                   radiusMeters={radiusMeters}
-                  locationLabel={pinnedLocationName || church?.branchName || church?.churchName}
+                  locationLabel={
+                    pinnedLocationName ||
+                    church?.branchName ||
+                    church?.churchName
+                  }
                   height={190}
                   hideOverlay
                 />
@@ -517,7 +626,8 @@ export const BeaconSettingsPage: React.FC = () => {
               <div>
                 <h2>Calibrate Premises Anchors via Mobile App</h2>
                 <p>
-                  Smartphones have direct access to physical Wi-Fi radio chips and high-precision GPS sensors.
+                  Smartphones have direct access to physical Wi-Fi radio chips
+                  and high-precision GPS sensors.
                 </p>
               </div>
             </div>
@@ -535,10 +645,13 @@ export const BeaconSettingsPage: React.FC = () => {
                 <Smartphone size={32} />
               </div>
               <h3 className={styles.connectedStatusTitle}>
-                📱 Mobile Phone Connected!
+                Mobile Phone Connected!
               </h3>
               <p className={styles.connectedStatusDesc}>
-                Your smartphone ({calibrationSession.platform || "Device"}) is currently linked. Please search or select your premises Wi-Fi router and confirm GPS coordinates on your phone, then tap <strong>Save &amp; Sync to Web Portal</strong>.
+                Your smartphone ({calibrationSession.platform || "Device"}) is
+                currently linked. Please search or select your premises Wi-Fi
+                router and confirm GPS coordinates on your phone, then tap{" "}
+                <strong>Save &amp; Sync to Web Portal</strong>.
               </p>
               <div
                 style={{
@@ -572,8 +685,8 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.qrSvgWrapper}>
                   <QRCodeSVG
                     value={qrPayload}
-                    size={220}
-                    level="H"
+                    size={260}
+                    level="M"
                     includeMargin={true}
                   />
                 </div>
@@ -591,7 +704,8 @@ export const BeaconSettingsPage: React.FC = () => {
                   <div className={styles.qrStepText}>
                     <h4>Open Presenti Mobile App</h4>
                     <p>
-                      Launch the Presenti Mobile App on an Android or iOS smartphone while standing on premises.
+                      Launch the Presenti Mobile App on an Android or iOS
+                      smartphone while standing on premises.
                     </p>
                   </div>
                 </div>
@@ -599,9 +713,27 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.qrStepItem}>
                   <div className={styles.qrStepNumber}>2</div>
                   <div className={styles.qrStepText}>
-                    <h4>Tap &quot;Calibrate Premises Anchors&quot;</h4>
+                    <h4>Tap &quot;Administrator? Calibrate Premises&quot;</h4>
                     <p>
-                      On the mobile login screen, tap <em>&quot;Administrator? Calibrate Premises Anchors&quot;</em> below the Google sign-in button (or tap <em>Calibrate</em> in the dashboard).
+                      On the mobile welcome screen, tap{" "}
+                      <strong>
+                        &quot;Administrator? Calibrate Premises&quot;
+                      </strong>{" "}
+                      below the Google button (no sign-in required).
+                    </p>
+                    <p
+                      style={{
+                        marginTop: 4,
+                        fontSize: "0.8rem",
+                        color: "#64748B",
+                      }}
+                    >
+                      <em>
+                        Note: If the phone is already logged into a workforce
+                        member account, simply tap <strong>Sign Out</strong> at
+                        the bottom of the dashboard or tap the{" "}
+                        <strong>Calibrate</strong> chip.
+                      </em>
                     </p>
                   </div>
                 </div>
@@ -611,7 +743,9 @@ export const BeaconSettingsPage: React.FC = () => {
                   <div className={styles.qrStepText}>
                     <h4>Point Camera at this QR Code</h4>
                     <p>
-                      Scan the QR code on your computer screen. The phone will instantly detect nearby physical Wi-Fi radios and acquire high-accuracy GPS coordinates!
+                      Scan the QR code on your computer screen. The phone will
+                      instantly detect nearby physical Wi-Fi radios and acquire
+                      high-accuracy GPS coordinates!
                     </p>
                   </div>
                 </div>
@@ -650,14 +784,33 @@ export const BeaconSettingsPage: React.FC = () => {
         </button>
 
         {manualOpen && (
-          <form onSubmit={handleSaveManual} className={styles.manualAccordionBody}>
+          <form
+            onSubmit={handleSaveManual}
+            className={styles.manualAccordionBody}
+          >
             <p style={{ margin: 0, fontSize: "0.825rem", color: "#64748B" }}>
-              Use this form only if mobile QR pairing is not possible. You can manually enter the router SSID and hardware BSSID (MAC), and pinpoint coordinates using the satellite map.
+              Use this form only if mobile QR pairing is not possible. You can
+              manually enter the router SSID and hardware BSSID (MAC), and
+              pinpoint coordinates using the satellite map.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "20px",
+              }}
+            >
               <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: "#334155",
+                    marginBottom: 6,
+                  }}
+                >
                   Premises Router SSID Label *
                 </label>
                 <input
@@ -676,7 +829,15 @@ export const BeaconSettingsPage: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: "#334155",
+                    marginBottom: 6,
+                  }}
+                >
                   Hardware BSSID (MAC Address) *
                 </label>
                 <input
@@ -698,7 +859,15 @@ export const BeaconSettingsPage: React.FC = () => {
 
             {/* Manual Pinpoint on Satellite Map */}
             <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 8 }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "#334155",
+                  marginBottom: 8,
+                }}
+              >
                 Geofence Centerpoint &amp; Allowed Boundary
               </label>
               <LocationSearchPinpoint
@@ -713,12 +882,18 @@ export const BeaconSettingsPage: React.FC = () => {
                   if (label) setPinnedLocationName(label);
                 }}
               />
-              <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden" }}>
+              <div
+                style={{ marginTop: 12, borderRadius: 10, overflow: "hidden" }}
+              >
                 <GooglePresenceMap
                   latitude={latitude}
                   longitude={longitude}
                   radiusMeters={radiusMeters}
-                  locationLabel={pinnedLocationName || church?.branchName || church?.churchName}
+                  locationLabel={
+                    pinnedLocationName ||
+                    church?.branchName ||
+                    church?.churchName
+                  }
                   onCoordinatesChange={(lat, lng) => {
                     setLatitude(lat);
                     setLongitude(lng);
@@ -730,8 +905,17 @@ export const BeaconSettingsPage: React.FC = () => {
 
             {/* Radius options */}
             <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 8 }}>
-                Allowed Geofence Perimeter: {radiusMeters}m radius ({radiusMeters * 2}m diameter)
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "#334155",
+                  marginBottom: 8,
+                }}
+              >
+                Allowed Geofence Perimeter: {radiusMeters}m radius (
+                {radiusMeters * 2}m diameter)
               </label>
               <div className={styles.radiusSelector}>
                 {RADIUS_OPTIONS.map((r) => (
@@ -747,7 +931,9 @@ export const BeaconSettingsPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}
+            >
               <button
                 type="button"
                 className={styles.cancelEditBtn}
@@ -761,7 +947,9 @@ export const BeaconSettingsPage: React.FC = () => {
                 className={styles.editMainBtn}
               >
                 <Save size={16} />
-                <span>{isSavingManual ? "Saving..." : "Save Manual Anchors"}</span>
+                <span>
+                  {isSavingManual ? "Saving..." : "Save Manual Anchors"}
+                </span>
               </button>
             </div>
           </form>

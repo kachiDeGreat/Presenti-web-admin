@@ -483,7 +483,8 @@ export const OnboardingPage: React.FC = () => {
         geoFallback: {
           latitude: initialCoords.lat,
           longitude: initialCoords.lng,
-          radiusMeters: 10,
+          radiusMeters: 0,
+          isConfigured: false,
         },
         policySettings: {
           serviceDays,
