@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Building2,
   Users,
@@ -12,6 +13,8 @@ import {
   Lock,
   Copy,
   Check,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
@@ -35,7 +38,9 @@ const DAYS_OF_WEEK = [
 ];
 
 export const SetupPage: React.FC = () => {
-  const { church, updateChurch } = useAuth();
+  const { church, updateChurch, deleteChurchWorkspace } = useAuth();
+  const navigate = useNavigate();
+  const [isResettingWorkspace, setIsResettingWorkspace] = useState(false);
 
   const [churchName, setChurchName] = useState("");
   const [branchName, setBranchName] = useState("");
@@ -528,6 +533,107 @@ export const SetupPage: React.FC = () => {
             {saving ? "Saving Changes..." : "Save Organization Policy"}
           </span>
         </button>
+      </div>
+
+      {/* Danger Zone: Workspace Reset & Re-onboarding */}
+      <div
+        style={{
+          marginTop: "2.5rem",
+          padding: "1.5rem",
+          backgroundColor: "#FFF1F2",
+          border: "1px solid #FECDD3",
+          borderRadius: "12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1.25rem",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              backgroundColor: "#FFE4E6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#E11D48",
+              flexShrink: 0,
+            }}
+          >
+            <Trash2 size={20} />
+          </div>
+          <div>
+            <h4
+              style={{
+                margin: 0,
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: "#9F1239",
+              }}
+            >
+              Danger Zone: Reset Organization Workspace
+            </h4>
+            <p
+              style={{
+                margin: "3px 0 0",
+                fontSize: "0.825rem",
+                color: "#BE123C",
+                lineHeight: 1.4,
+              }}
+            >
+              Permanently wipe this workspace from Firestore, purge all cached members and attendance records from this browser, and restart the onboarding process from scratch.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={async () => {
+              const confirmed = window.confirm(
+                "Are you sure you want to completely reset this organization workspace?\n\nThis will permanently delete this organization from Firestore, clear all local workspace cache, and return you to step-by-step onboarding to configure a fresh workspace from scratch."
+              );
+              if (!confirmed) return;
+
+              try {
+                setIsResettingWorkspace(true);
+                await deleteChurchWorkspace();
+                toast.success("Workspace reset successfully. Opening onboarding setup...");
+                navigate("/onboarding", { replace: true });
+              } catch (err) {
+                console.error("Error resetting workspace:", err);
+                toast.error("Failed to reset workspace. Please try again.");
+              } finally {
+                setIsResettingWorkspace(false);
+              }
+            }}
+            disabled={isResettingWorkspace}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              backgroundColor: "#E11D48",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              cursor: isResettingWorkspace ? "not-allowed" : "pointer",
+              opacity: isResettingWorkspace ? 0.7 : 1,
+              transition: "background-color 0.15s ease",
+            }}
+          >
+            <RotateCcw size={16} />
+            <span>
+              {isResettingWorkspace
+                ? "Resetting Workspace..."
+                : "Reset Workspace & Re-onboard"}
+            </span>
+          </button>
+        </div>
       </div>
     </form>
   );

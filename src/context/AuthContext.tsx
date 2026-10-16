@@ -15,6 +15,8 @@ import {
   saveChurchDoc,
   saveStoredChurch,
   checkIfUserIsWorker,
+  deleteChurchWorkspaceDoc,
+  purgeLocalWorkspaceData,
 } from '../services/dataService';
 
 export interface RegisterPayload {
@@ -36,6 +38,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateChurch: (updated: Partial<Church>) => Promise<void>;
   createChurchWorkspace: (data: Omit<Church, 'id' | 'adminUids'>) => Promise<Church>;
+  deleteChurchWorkspace: () => Promise<void>;
   isLiveFirebase: boolean;
 }
 
@@ -387,10 +390,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newChurch;
   };
 
+  const deleteChurchWorkspace = async (): Promise<void> => {
+    if (!church) return;
+    const cid = church.id;
+    const email = church.adminEmail || user?.email;
+    await deleteChurchWorkspaceDoc(cid, email);
+    setChurch(null);
+  };
+
   const logout = async (): Promise<void> => {
     if (isFirebaseConfigured && auth) {
       await signOut(auth);
     }
+    purgeLocalWorkspaceData(church?.id);
     localStorage.removeItem(SESSION_KEY);
     setUser(null);
     setChurch(null);
@@ -415,6 +427,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         updateChurch,
         createChurchWorkspace,
+        deleteChurchWorkspace,
         isLiveFirebase: isFirebaseConfigured,
       }}
     >

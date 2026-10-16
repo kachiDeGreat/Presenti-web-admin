@@ -267,6 +267,36 @@ export const saveStoredAttendance = (records: AttendanceRecord[]): void => {
   localStorage.setItem(STORAGE_ATTENDANCE, JSON.stringify(records));
 };
 
+// Purge all workspace data from browser localStorage to prevent resurrecting deleted Firestore data
+export const purgeLocalWorkspaceData = (churchId?: string): void => {
+  try {
+    if (churchId) {
+      localStorage.removeItem(`sanctuary_church_${churchId}`);
+    }
+    localStorage.removeItem(STORAGE_CHURCH);
+    localStorage.removeItem('sanctuary_church_data');
+    localStorage.removeItem(STORAGE_MEMBERS);
+    localStorage.removeItem(STORAGE_ATTENDANCE);
+
+    // Purge any key in localStorage matching sanctuary_church_
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith('sanctuary_church_') ||
+          key.startsWith('sanctuary_members_') ||
+          key.startsWith('sanctuary_attendance_'))
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (err) {
+    console.warn('Error purging local workspace data:', err);
+  }
+};
+
 // Firestore integration methods
 export const fetchChurchDoc = async (
   churchId: string,
@@ -322,6 +352,11 @@ export const fetchChurchDoc = async (
           return churchData;
         }
       }
+
+      // Firestore was successfully checked and confirms NO church document exists.
+      // Purge any stale localStorage data for this church and return null so the user is routed to /onboarding!
+      purgeLocalWorkspaceData(churchId);
+      return null;
     } catch (err: unknown) {
       console.warn(
         'Firestore fetchChurchDoc error (Check Firestore Rules in Firebase Console):',
@@ -330,34 +365,58 @@ export const fetchChurchDoc = async (
     }
   }
 
-  // 4. Local storage fallback (for offline or local dev persistence)
-  const local = localStorage.getItem(`sanctuary_church_${churchId}`);
-  if (local) {
-    try {
-      return JSON.parse(local);
-    } catch {
-      // fallback
-    }
-  }
-
-  const genericLocal = localStorage.getItem('sanctuary_church_data');
-  if (genericLocal) {
-    try {
-      const parsed = JSON.parse(genericLocal);
-      if (
-        parsed &&
-        (parsed.id === churchId ||
-          parsed.adminUids?.includes(churchId) ||
-          (userEmail && parsed.adminEmail?.toLowerCase() === userEmail.toLowerCase()))
-      ) {
-        return parsed;
+  // 4. Local storage fallback (ONLY for offline or mock mode when Firebase is NOT configured)
+  if (!isFirebaseConfigured) {
+    const local = localStorage.getItem(`sanctuary_church_${churchId}`);
+    if (local) {
+      try {
+        return JSON.parse(local);
+      } catch {
+        // fallback
       }
-    } catch {
-      // fallback
+    }
+
+    const genericLocal = localStorage.getItem('sanctuary_church_data');
+    if (genericLocal) {
+      try {
+        const parsed = JSON.parse(genericLocal);
+        if (
+          parsed &&
+          (parsed.id === churchId ||
+            parsed.adminUids?.includes(churchId) ||
+            (userEmail && parsed.adminEmail?.toLowerCase() === userEmail.toLowerCase()))
+        ) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
     }
   }
 
   return null;
+};
+
+// Completely wipe a church workspace from Firestore and localStorage
+export const deleteChurchWorkspaceDoc = async (
+  churchId: string,
+  userEmail?: string | null
+): Promise<void> => {
+  if (isFirebaseConfigured && db) {
+    try {
+      await deleteDoc(doc(db, 'churches', churchId));
+    } catch (err) {
+      console.warn('Error deleting church doc from Firestore:', err);
+    }
+    if (userEmail) {
+      try {
+        await deleteDoc(doc(db, 'account_roles', userEmail.trim().toLowerCase()));
+      } catch (err) {
+        console.warn('Error deleting account role from Firestore:', err);
+      }
+    }
+  }
+  purgeLocalWorkspaceData(churchId);
 };
 
 // Check if an email or UID is registered as a workforce member / employee on the mobile app
