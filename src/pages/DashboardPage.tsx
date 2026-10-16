@@ -114,6 +114,8 @@ export const DashboardPage: React.FC = () => {
     year: "numeric",
   });
 
+  const isGeofenceOnly = church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY";
+
   const isWifiConfigured = Boolean(
     church?.beaconConfig?.ssidHint &&
     church.beaconConfig.ssidHint.trim() !== "" &&
@@ -122,16 +124,13 @@ export const DashboardPage: React.FC = () => {
   );
 
   const isGeoConfigured = Boolean(
-    church?.geoFallback?.isConfigured ??
-    (
-      church?.geoFallback &&
-      church.geoFallback.radiusMeters > 0 &&
-      (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0) &&
-      isWifiConfigured
-    )
+    (church?.isCalibrated || church?.geoFallback?.isCalibrated || church?.geoFallback?.isConfigured) &&
+    church?.geoFallback &&
+    church.geoFallback.radiusMeters > 0 &&
+    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0)
   );
 
-  const isFullyConfigured = isWifiConfigured && isGeoConfigured;
+  const isFullyConfigured = isGeofenceOnly ? isGeoConfigured : (isWifiConfigured && isGeoConfigured);
 
   return (
     <div className={styles.dashboardContainer}>
@@ -168,9 +167,10 @@ export const DashboardPage: React.FC = () => {
           <div className={styles.anchorAlertLeft}>
             <Radio size={16} color="#D97706" />
             <span>
-              <strong>Presence Anchors Uncalibrated:</strong> Configure
-              organization Wi-Fi and geofence coordinates to activate automated
-              mobile verification.
+              <strong>Presence Anchors Uncalibrated:</strong>{" "}
+              {isGeofenceOnly
+                ? "Configure premises GPS geofence boundary coordinates to activate automated mobile verification."
+                : "Configure organization Wi-Fi and geofence coordinates to activate automated mobile verification."}
             </span>
           </div>
           <Link to="/settings/beacon" className={styles.anchorAlertLink}>
@@ -191,10 +191,17 @@ export const DashboardPage: React.FC = () => {
               />
               <strong>Anchors Active:</strong>
             </span>
-            <span className={styles.anchorItem}>
-              <Wifi size={13} color="#059669" />
-              <span>Wi-Fi: {church?.beaconConfig?.targetBssid}</span>
-            </span>
+            {isGeofenceOnly ? (
+              <span className={styles.anchorItem}>
+                <Radio size={13} color="#059669" />
+                <span>Mode: Router-Free (GPS)</span>
+              </span>
+            ) : (
+              <span className={styles.anchorItem}>
+                <Wifi size={13} color="#059669" />
+                <span>Wi-Fi: {church?.beaconConfig?.targetBssid}</span>
+              </span>
+            )}
             <span className={styles.anchorItem}>
               <MapPin size={13} color="#2563EB" />
               <span>

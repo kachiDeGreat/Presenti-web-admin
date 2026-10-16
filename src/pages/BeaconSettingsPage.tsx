@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Wifi,
   MapPin,
@@ -37,12 +37,20 @@ export const BeaconSettingsPage: React.FC = () => {
   const [longitude, setLongitude] = useState<number>(8.3417);
   const [radiusMeters, setRadiusMeters] = useState<number>(10);
   const [pinnedLocationName, setPinnedLocationName] = useState<string>("");
+  const [isCalibratedLive, setIsCalibratedLive] = useState<boolean>(false);
 
   // View state: OVERVIEW (if already calibrated) vs QR_STATION (to calibrate)
   const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">(
     "QR_STATION",
   );
   const [hasInitializedView, setHasInitializedView] = useState<boolean>(false);
+
+  // Session notification tracking refs to prevent duplicate toasts and revisit toasts
+  const lastAnnouncedSessionRef = useRef<{
+    completedAt?: string;
+    disconnectedAt?: string;
+  }>({});
+  const isInitialMountRef = useRef<boolean>(true);
 
   // Setup Wizard State
   type SetupStep = "CHOOSE_MODE" | "ROUTER_PREREQUISITE" | "SHOW_QR";
@@ -157,8 +165,14 @@ export const BeaconSettingsPage: React.FC = () => {
         church.geoFallback?.isCalibrated ||
         (church.geoFallback?.isConfigured &&
           (church.beaconConfig?.targetBssid ||
-            church.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
+            church.beaconConfig?.verificationMode === "GEOFENCE_ONLY")) ||
+        (Number(church.geoFallback?.latitude ?? 0) !== 0 &&
+          Number(church.geoFallback?.longitude ?? 0) !== 0)
       );
+
+      if (isExplicitlyCalibrated) {
+        setIsCalibratedLive(true);
+      }
 
       const savedSsid = isExplicitlyCalibrated ? (church.beaconConfig?.ssidHint || "") : "";
       const savedBssid = isExplicitlyCalibrated ? (church.beaconConfig?.targetBssid || "") : "";
@@ -186,7 +200,6 @@ export const BeaconSettingsPage: React.FC = () => {
     if (!db || !church?.id) return;
 
     const sessionRef = doc(db, "churches", church.id, "calibration", "session");
-    let isInitialMount = true;
 
     const unsubscribe = onSnapshot(sessionRef, (snap) => {
       if (snap.exists()) {
@@ -200,22 +213,41 @@ export const BeaconSettingsPage: React.FC = () => {
             platform: data.platform,
           }));
 
-          // Only trigger completion toast when actively calibrated via mobile during session
-          if (!isInitialMount && data.status === "COMPLETED") {
-            toast.success(
-              "Premises anchors successfully calibrated via mobile device!",
-            );
-            setViewMode("OVERVIEW");
+          // Avoid announcing status from a previous session on page load / revisit
+          if (isInitialMountRef.current) {
+            lastAnnouncedSessionRef.current = {
+              completedAt: data.completedAt,
+              disconnectedAt: data.disconnectedAt,
+            };
+            isInitialMountRef.current = false;
+            return;
+          }
+
+          if (data.status === "COMPLETED") {
+            const completedKey = data.completedAt || "completed";
+            if (lastAnnouncedSessionRef.current.completedAt !== completedKey) {
+              lastAnnouncedSessionRef.current.completedAt = completedKey;
+              toast.success(
+                "Premises anchors successfully calibrated via mobile device!",
+              );
+              setViewMode("OVERVIEW");
+              setIsCalibratedLive(true);
+            }
           } else if (
-            !isInitialMount &&
-            (data.status === "DISCONNECTED" || data.status === "CANCELLED")
+            data.status === "DISCONNECTED" ||
+            data.status === "CANCELLED"
           ) {
-            toast.info("Mobile device disconnected from calibration session.");
-            setCalibrationSession({ status: "AWAITING_SCAN" });
+            const disconnectedKey = data.disconnectedAt || "disconnected";
+            if (lastAnnouncedSessionRef.current.disconnectedAt !== disconnectedKey) {
+              lastAnnouncedSessionRef.current.disconnectedAt = disconnectedKey;
+              toast.info("Mobile device disconnected from calibration session.");
+              setCalibrationSession({ status: "AWAITING_SCAN" });
+            }
           }
         }
+      } else {
+        isInitialMountRef.current = false;
       }
-      isInitialMount = false;
     }, (err) => {
       console.warn("Session snapshot notice:", err);
     });
@@ -232,7 +264,7 @@ export const BeaconSettingsPage: React.FC = () => {
       if (snap.exists()) {
         const data = snap.data();
 
-        // 1. Check for real-time calibrationSession written directly on church doc
+        // 1. Sync calibration session state if present
         if (data?.calibrationSession?.status) {
           setCalibrationSession((prev) => ({
             ...prev,
@@ -243,10 +275,8 @@ export const BeaconSettingsPage: React.FC = () => {
           }));
 
           if (data.calibrationSession.status === "COMPLETED") {
-            toast.success(
-              "Premises anchors successfully calibrated via mobile device!",
-            );
             setViewMode("OVERVIEW");
+            setIsCalibratedLive(true);
           } else if (data.calibrationSession.status === "DISCONNECTED") {
             setCalibrationSession({ status: "AWAITING_SCAN" });
           }
@@ -261,10 +291,12 @@ export const BeaconSettingsPage: React.FC = () => {
           data?.isCalibrated ||
           data?.geoFallback?.isCalibrated ||
           (data?.geoFallback?.isConfigured &&
-            (freshBssid || data?.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
+            (freshBssid || data?.beaconConfig?.verificationMode === "GEOFENCE_ONLY")) ||
+          (freshLat !== 0 && freshLng !== 0)
         );
 
         if (isExplicit) {
+          setIsCalibratedLive(true);
           if (freshBssid) setTargetBssid(freshBssid);
           if (freshSsid) setSsidHint(freshSsid);
           if (freshLat && freshLng) {
@@ -324,6 +356,7 @@ export const BeaconSettingsPage: React.FC = () => {
     setViewMode("QR_STATION");
     setSetupStep("CHOOSE_MODE");
     setCalibrationSession({ status: "AWAITING_SCAN" });
+    lastAnnouncedSessionRef.current = {};
 
     if (db && church?.id) {
       try {
@@ -399,15 +432,22 @@ export const BeaconSettingsPage: React.FC = () => {
     churchCode: church?.churchCode || "ORG",
   });
 
+  const isGeofenceOnly =
+    church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" ||
+    (selectedMode === "GEOFENCE_ONLY" && !targetBssid);
+
   const isExplicitlyCalibrated = Boolean(
+    isCalibratedLive ||
     church?.isCalibrated ||
     church?.geoFallback?.isCalibrated ||
     (church?.geoFallback?.isConfigured &&
-      (targetBssid || church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
+      (targetBssid || church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY")) ||
+    ((latitude !== 0 || longitude !== 0) && radiusMeters > 0)
   );
 
-  const isGeofenceOnly = church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" || (selectedMode === "GEOFENCE_ONLY" && !targetBssid);
-  const isWifiConfigured = Boolean(isExplicitlyCalibrated && targetBssid && targetBssid.trim() !== "");
+  const isWifiConfigured = Boolean(
+    isExplicitlyCalibrated && targetBssid && targetBssid.trim() !== "",
+  );
 
   const isGeoConfigured = Boolean(
     isExplicitlyCalibrated &&

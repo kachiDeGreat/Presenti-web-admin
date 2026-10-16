@@ -9,7 +9,8 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db, googleProvider, isFirebaseConfigured } from '../config/firebase';
 import type { Church, UserProfile } from '../types';
 import {
   fetchChurchDoc,
@@ -133,6 +134,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
   }, []);
+
+  // Real-time synchronization of church document across the entire admin application
+  useEffect(() => {
+    if (!isFirebaseConfigured || !db || !church?.id) return;
+
+    const churchRef = doc(db, 'churches', church.id);
+    const unsubscribe = onSnapshot(
+      churchRef,
+      (snap) => {
+        if (snap.exists()) {
+          const fresh = { id: snap.id, ...(snap.data() as Omit<Church, 'id'>) };
+          setChurch(fresh);
+          saveStoredChurch(fresh);
+        }
+      },
+      (err) => {
+        console.warn('Real-time church doc listener error:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [church?.id]);
 
   const signInWithGoogle = async (): Promise<{ isNewUser: boolean; churchExists: boolean }> => {
     if (isFirebaseConfigured && auth) {

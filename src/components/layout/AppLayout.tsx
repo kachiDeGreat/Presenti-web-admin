@@ -39,6 +39,8 @@ export const AppLayout: React.FC = () => {
     }
   };
 
+  const isGeofenceOnly = church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY";
+
   const isWifiConfigured = Boolean(
     church?.beaconConfig?.ssidHint &&
     church.beaconConfig.ssidHint.trim() !== "" &&
@@ -47,14 +49,13 @@ export const AppLayout: React.FC = () => {
   );
 
   const isGeoConfigured = Boolean(
-    church?.geoFallback?.isConfigured ??
-    (
-      church?.geoFallback &&
-      church.geoFallback.radiusMeters > 0 &&
-      (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0) &&
-      isWifiConfigured
-    )
+    (church?.isCalibrated || church?.geoFallback?.isCalibrated || church?.geoFallback?.isConfigured) &&
+    church?.geoFallback &&
+    church.geoFallback.radiusMeters > 0 &&
+    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0)
   );
+
+  const isFullyConfigured = isGeofenceOnly ? isGeoConfigured : (isWifiConfigured && isGeoConfigured);
 
   return (
     <div className={styles.layoutRoot}>
@@ -109,7 +110,7 @@ export const AppLayout: React.FC = () => {
           >
             <Radio size={18} />
             <span>Presence Anchors</span>
-            {!church?.beaconConfig?.ssidHint && (
+            {!isFullyConfigured && (
               <span
                 className="badge badge-warning"
                 style={{
@@ -257,20 +258,37 @@ export const AppLayout: React.FC = () => {
               </button>
             )}
 
-            <div className={styles.hardwareAnchorStatus}>
-              <Wifi
-                size={14}
-                color={isWifiConfigured ? "#059669" : "#D97706"}
-              />
-              <span>
-                Wi-Fi:{" "}
-                <strong>
-                  {isWifiConfigured
-                    ? church?.beaconConfig?.targetBssid
-                    : "Unconfigured"}
-                </strong>
-              </span>
-            </div>
+            {isGeofenceOnly ? (
+              <div className={styles.hardwareAnchorStatus}>
+                <Radio
+                  size={14}
+                  color={isGeoConfigured ? "#059669" : "#D97706"}
+                />
+                <span>
+                  Mode:{" "}
+                  <strong>
+                    {isGeoConfigured
+                      ? "Router-Free (GPS Active)"
+                      : "GPS Only · Pending"}
+                  </strong>
+                </span>
+              </div>
+            ) : (
+              <div className={styles.hardwareAnchorStatus}>
+                <Wifi
+                  size={14}
+                  color={isWifiConfigured ? "#059669" : "#D97706"}
+                />
+                <span>
+                  Wi-Fi:{" "}
+                  <strong>
+                    {isWifiConfigured
+                      ? church?.beaconConfig?.targetBssid
+                      : "Unconfigured"}
+                  </strong>
+                </span>
+              </div>
+            )}
 
             <div className={styles.hardwareAnchorStatus}>
               <MapPin
