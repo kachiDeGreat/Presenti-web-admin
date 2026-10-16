@@ -4,8 +4,9 @@ export type VerificationMethod = 'WIFI_BSSID' | 'GEO_FALLBACK';
 export type AttendanceStatus = 'ON_TIME' | 'LATE';
 
 export interface BeaconConfig {
-  targetBssid: string; // MAC address, e.g. "0c:61:f9:65:8f:07"
-  ssidHint: string;    // Human label, e.g. "Office-Main-5G"
+  targetBssid: string; // MAC address, e.g. "0c:61:f9:65:8f:07" or "" if GEOFENCE_ONLY
+  ssidHint: string;    // Human label, e.g. "Office-Main-5G" or "Office Geofence Zone"
+  verificationMode?: 'HYBRID' | 'GEOFENCE_ONLY';
 }
 
 export interface GeoFallback {
@@ -13,6 +14,7 @@ export interface GeoFallback {
   longitude: number;
   radiusMeters: number; // e.g. 40
   isConfigured?: boolean;
+  isCalibrated?: boolean;
 }
 
 export interface PolicySettings {
@@ -20,6 +22,15 @@ export interface PolicySettings {
   arrivalCutoff: string; // e.g. "07:30"
   lateTolerance?: string; // e.g. "07:45"
   syncCutoff: string;    // e.g. "12:00"
+}
+
+export interface CalibrationSessionData {
+  status: 'AWAITING_SCAN' | 'CONNECTED' | 'DISCONNECTED' | 'CANCELLED' | 'COMPLETED';
+  connectedAt?: string;
+  completedAt?: string;
+  disconnectedAt?: string;
+  platform?: string;
+  mode?: 'HYBRID' | 'GEOFENCE_ONLY';
 }
 
 export interface Church {
@@ -35,6 +46,8 @@ export interface Church {
   beaconConfig: BeaconConfig;
   geoFallback: GeoFallback;
   policySettings: PolicySettings;
+  calibrationSession?: CalibrationSessionData;
+  isCalibrated?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

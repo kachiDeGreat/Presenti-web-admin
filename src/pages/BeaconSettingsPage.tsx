@@ -10,24 +10,19 @@ import {
   Edit3,
   ShieldCheck,
   ChevronDown,
-  ChevronUp,
   QrCode,
   Smartphone,
   Copy,
   Check,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../config/firebase";
 import { GooglePresenceMap } from "../components/common/GooglePresenceMap";
 import { LocationSearchPinpoint } from "../components/common/LocationSearchPinpoint";
-import {
-  validateSsid,
-  validateMacAddress,
-  validateCoordinates,
-} from "../utils/formValidation";
+import { validateCoordinates } from "../utils/formValidation";
 import styles from "./BeaconSettingsPage.module.css";
 
 const RADIUS_OPTIONS = [10, 20, 30, 40, 50, 80, 100];
@@ -49,6 +44,11 @@ export const BeaconSettingsPage: React.FC = () => {
   );
   const [hasInitializedView, setHasInitializedView] = useState<boolean>(false);
 
+  // Setup Wizard State
+  type SetupStep = "CHOOSE_MODE" | "ROUTER_PREREQUISITE" | "SHOW_QR";
+  const [setupStep, setSetupStep] = useState<SetupStep>("CHOOSE_MODE");
+  const [selectedMode, setSelectedMode] = useState<"HYBRID" | "GEOFENCE_ONLY">("HYBRID");
+
   // Real-time Calibration Session state
   const [calibrationSession, setCalibrationSession] = useState<{
     status: "AWAITING_SCAN" | "CONNECTED" | "COMPLETED";
@@ -57,11 +57,40 @@ export const BeaconSettingsPage: React.FC = () => {
     platform?: string;
   }>({ status: "AWAITING_SCAN" });
 
-  // Manual fallback accordion toggle
-  const [manualOpen, setManualOpen] = useState(false);
-  const [isSavingManual, setIsSavingManual] = useState(false);
+  // Web Geofence direct editing state
+  const [isEditingGeoOnWeb, setIsEditingGeoOnWeb] = useState(false);
+  const [isSavingGeo, setIsSavingGeo] = useState(false);
   const [copiedMac, setCopiedMac] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+
+  // Direct Web Geofence Update handler
+  const handleSaveGeoOnWeb = async () => {
+    const coordsVal = validateCoordinates(latitude, longitude);
+    if (!coordsVal.isValid) {
+      toast.error(coordsVal.error);
+      return;
+    }
+    setIsSavingGeo(true);
+    try {
+      await updateChurch({
+        geoFallback: {
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          radiusMeters: Number(radiusMeters),
+          isConfigured: true,
+          isCalibrated: true,
+        },
+        isCalibrated: true,
+      });
+      toast.success("Geofence perimeter and coordinates updated successfully!");
+      setIsEditingGeoOnWeb(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update geofence coordinates.");
+    } finally {
+      setIsSavingGeo(false);
+    }
+  };
 
   // Browser Geolocation Pickup with graceful desktop fallback
   const handleUseCurrentLocation = () => {
@@ -123,20 +152,20 @@ export const BeaconSettingsPage: React.FC = () => {
   // Initialize data from church profile
   useEffect(() => {
     if (church) {
-      const savedSsid = church.beaconConfig?.ssidHint || "";
-      const savedBssid = church.beaconConfig?.targetBssid || "";
-      const isGeoSet = Boolean(
-        church.geoFallback?.isConfigured ??
-        (church.geoFallback &&
-          church.geoFallback.radiusMeters > 0 &&
-          (church.geoFallback.latitude !== 0 ||
-            church.geoFallback.longitude !== 0) &&
-          Boolean(savedBssid)),
+      const isExplicitlyCalibrated = Boolean(
+        church.isCalibrated ||
+        church.geoFallback?.isCalibrated ||
+        (church.geoFallback?.isConfigured &&
+          (church.beaconConfig?.targetBssid ||
+            church.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
       );
-      const savedLat = isGeoSet ? church.geoFallback!.latitude : 4.975;
-      const savedLng = isGeoSet ? church.geoFallback!.longitude : 8.3417;
-      const savedRadius = isGeoSet ? church.geoFallback!.radiusMeters : 10;
-      const savedLabel = church.branchName || church.churchName || "";
+
+      const savedSsid = isExplicitlyCalibrated ? (church.beaconConfig?.ssidHint || "") : "";
+      const savedBssid = isExplicitlyCalibrated ? (church.beaconConfig?.targetBssid || "") : "";
+      const savedLat = isExplicitlyCalibrated ? Number(church.geoFallback?.latitude ?? 0) : 0;
+      const savedLng = isExplicitlyCalibrated ? Number(church.geoFallback?.longitude ?? 0) : 0;
+      const savedRadius = isExplicitlyCalibrated ? Number(church.geoFallback?.radiusMeters ?? 10) : 10;
+      const savedLabel = isExplicitlyCalibrated ? (church.branchName || church.churchName || "") : "";
 
       setSsidHint(savedSsid);
       setTargetBssid(savedBssid);
@@ -146,8 +175,7 @@ export const BeaconSettingsPage: React.FC = () => {
       setPinnedLocationName(savedLabel);
 
       if (!hasInitializedView) {
-        const isAlreadyCalibrated = Boolean(savedBssid && isGeoSet);
-        setViewMode(isAlreadyCalibrated ? "OVERVIEW" : "QR_STATION");
+        setViewMode(isExplicitlyCalibrated ? "OVERVIEW" : "QR_STATION");
         setHasInitializedView(true);
       }
     }
@@ -164,12 +192,13 @@ export const BeaconSettingsPage: React.FC = () => {
       if (snap.exists()) {
         const data = snap.data();
         if (data?.status) {
-          setCalibrationSession({
+          setCalibrationSession((prev) => ({
+            ...prev,
             status: data.status,
             connectedAt: data.connectedAt,
             completedAt: data.completedAt,
             platform: data.platform,
-          });
+          }));
 
           // Only trigger completion toast when actively calibrated via mobile during session
           if (!isInitialMount && data.status === "COMPLETED") {
@@ -177,12 +206,18 @@ export const BeaconSettingsPage: React.FC = () => {
               "Premises anchors successfully calibrated via mobile device!",
             );
             setViewMode("OVERVIEW");
-          } else if (!isInitialMount && (data.status === "DISCONNECTED" || data.status === "CANCELLED")) {
+          } else if (
+            !isInitialMount &&
+            (data.status === "DISCONNECTED" || data.status === "CANCELLED")
+          ) {
             toast.info("Mobile device disconnected from calibration session.");
+            setCalibrationSession({ status: "AWAITING_SCAN" });
           }
         }
       }
       isInitialMount = false;
+    }, (err) => {
+      console.warn("Session snapshot notice:", err);
     });
 
     return () => unsubscribe();
@@ -196,33 +231,58 @@ export const BeaconSettingsPage: React.FC = () => {
     const unsubscribe = onSnapshot(churchRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
+
+        // 1. Check for real-time calibrationSession written directly on church doc
+        if (data?.calibrationSession?.status) {
+          setCalibrationSession((prev) => ({
+            ...prev,
+            status: data.calibrationSession.status,
+            connectedAt: data.calibrationSession.connectedAt,
+            completedAt: data.calibrationSession.completedAt,
+            platform: data.calibrationSession.platform,
+          }));
+
+          if (data.calibrationSession.status === "COMPLETED") {
+            toast.success(
+              "Premises anchors successfully calibrated via mobile device!",
+            );
+            setViewMode("OVERVIEW");
+          } else if (data.calibrationSession.status === "DISCONNECTED") {
+            setCalibrationSession({ status: "AWAITING_SCAN" });
+          }
+        }
+
         const freshBssid = data?.beaconConfig?.targetBssid || "";
         const freshSsid = data?.beaconConfig?.ssidHint || "";
         const freshLat = Number(data?.geoFallback?.latitude ?? 0);
         const freshLng = Number(data?.geoFallback?.longitude ?? 0);
         const freshRadius = Number(data?.geoFallback?.radiusMeters ?? 10);
-        const freshIsConfigured = Boolean(
-          data?.geoFallback?.isConfigured ||
-          (freshBssid && freshLat && freshLng),
+        const isExplicit = Boolean(
+          data?.isCalibrated ||
+          data?.geoFallback?.isCalibrated ||
+          (data?.geoFallback?.isConfigured &&
+            (freshBssid || data?.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
         );
 
-        if (freshBssid) setTargetBssid(freshBssid);
-        if (freshSsid) setSsidHint(freshSsid);
-        if (freshLat && freshLng) {
-          setLatitude(freshLat);
-          setLongitude(freshLng);
-          setRadiusMeters(freshRadius);
+        if (isExplicit) {
+          if (freshBssid) setTargetBssid(freshBssid);
+          if (freshSsid) setSsidHint(freshSsid);
+          if (freshLat && freshLng) {
+            setLatitude(freshLat);
+            setLongitude(freshLng);
+            setRadiusMeters(freshRadius);
 
-          // Reverse geocode venue address dynamically so label updates immediately
-          import("../services/geocodingService")
-            .then(({ reverseGeocode }) => {
-              reverseGeocode(freshLat, freshLng)
-                .then((geo) => {
-                  if (geo?.displayName) setPinnedLocationName(geo.displayName);
-                })
-                .catch(() => {});
-            })
-            .catch(() => {});
+            // Reverse geocode venue address dynamically so label updates immediately
+            import("../services/geocodingService")
+              .then(({ reverseGeocode }) => {
+                reverseGeocode(freshLat, freshLng)
+                  .then((geo) => {
+                    if (geo?.displayName) setPinnedLocationName(geo.displayName);
+                  })
+                  .catch(() => {});
+              })
+              .catch(() => {});
+          }
         }
 
         // Keep local storage in sync
@@ -236,8 +296,10 @@ export const BeaconSettingsPage: React.FC = () => {
             latitude: freshLat || latitude,
             longitude: freshLng || longitude,
             radiusMeters: freshRadius || radiusMeters,
-            isConfigured: freshIsConfigured,
+            isConfigured: isExplicit,
+            isCalibrated: isExplicit,
           },
+          isCalibrated: isExplicit,
         };
         try {
           localStorage.setItem(
@@ -250,6 +312,8 @@ export const BeaconSettingsPage: React.FC = () => {
           );
         } catch {}
       }
+    }, (err) => {
+      console.warn("Church snapshot notice:", err);
     });
 
     return () => unsubscribe();
@@ -258,18 +322,58 @@ export const BeaconSettingsPage: React.FC = () => {
   // Reset or start new QR calibration session
   const handleStartQrSession = async () => {
     setViewMode("QR_STATION");
+    setSetupStep("CHOOSE_MODE");
     setCalibrationSession({ status: "AWAITING_SCAN" });
 
     if (db && church?.id) {
       try {
-        await setDoc(
-          doc(db, "churches", church.id, "calibration", "session"),
-          {
-            status: "AWAITING_SCAN",
-            startedAt: new Date().toISOString(),
-          },
-          { merge: true },
-        );
+        const churchRef = doc(db, "churches", church.id);
+        const sessionRef = doc(db, "churches", church.id, "calibration", "session");
+        await Promise.all([
+          updateDoc(churchRef, {
+            "calibrationSession.status": "AWAITING_SCAN",
+            "calibrationSession.startedAt": new Date().toISOString(),
+          }).catch(() => {}),
+          setDoc(
+            sessionRef,
+            {
+              status: "AWAITING_SCAN",
+              startedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          ).catch(() => {}),
+        ]);
+      } catch (err) {
+        console.warn("Could not set session in Firestore:", err);
+      }
+    }
+  };
+
+  const handleSelectModeAndShowQr = async (mode: "HYBRID" | "GEOFENCE_ONLY") => {
+    setSelectedMode(mode);
+    setSetupStep("SHOW_QR");
+    setCalibrationSession({ status: "AWAITING_SCAN" });
+
+    if (db && church?.id) {
+      try {
+        const churchRef = doc(db, "churches", church.id);
+        const sessionRef = doc(db, "churches", church.id, "calibration", "session");
+        await Promise.all([
+          updateDoc(churchRef, {
+            "calibrationSession.status": "AWAITING_SCAN",
+            "calibrationSession.mode": mode,
+            "calibrationSession.startedAt": new Date().toISOString(),
+          }).catch(() => {}),
+          setDoc(
+            sessionRef,
+            {
+              status: "AWAITING_SCAN",
+              mode,
+              startedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          ).catch(() => {}),
+        ]);
       } catch (err) {
         console.warn("Could not set session in Firestore:", err);
       }
@@ -283,53 +387,6 @@ export const BeaconSettingsPage: React.FC = () => {
     setTimeout(() => setCopiedMac(false), 2000);
   };
 
-  // Manual save override
-  const handleSaveManual = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const ssidVal = validateSsid(ssidHint);
-    if (!ssidVal.isValid) {
-      toast.error(ssidVal.error);
-      return;
-    }
-
-    const bssidVal = validateMacAddress(targetBssid);
-    if (!bssidVal.isValid) {
-      toast.error(bssidVal.error);
-      return;
-    }
-
-    const coordsVal = validateCoordinates(latitude, longitude);
-    if (!coordsVal.isValid) {
-      toast.error(coordsVal.error);
-      return;
-    }
-
-    setIsSavingManual(true);
-    try {
-      await updateChurch({
-        beaconConfig: {
-          ssidHint: ssidHint.trim(),
-          targetBssid: targetBssid.trim().toLowerCase(),
-        },
-        geoFallback: {
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          radiusMeters: Number(radiusMeters),
-          isConfigured: true,
-        },
-      });
-
-      toast.success("Manual presence anchors saved successfully!");
-      setViewMode("OVERVIEW");
-      setManualOpen(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update manual presence anchors.");
-    } finally {
-      setIsSavingManual(false);
-    }
-  };
-
   // Compact QR Code Payload for instant recognition (<50ms like WhatsApp/Xender)
   const qrPayload = JSON.stringify({
     t: "CAL",
@@ -337,15 +394,25 @@ export const BeaconSettingsPage: React.FC = () => {
     c: church?.churchCode || "ORG",
     n: church?.branchName || church?.churchName || "Organization",
     type: "CALIBRATE_ANCHORS",
+    mode: selectedMode,
     churchId: church?.id || "",
     churchCode: church?.churchCode || "ORG",
   });
 
-  const isWifiConfigured = Boolean(targetBssid && targetBssid.trim() !== "");
+  const isExplicitlyCalibrated = Boolean(
+    church?.isCalibrated ||
+    church?.geoFallback?.isCalibrated ||
+    (church?.geoFallback?.isConfigured &&
+      (targetBssid || church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY"))
+  );
+
+  const isGeofenceOnly = church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" || (selectedMode === "GEOFENCE_ONLY" && !targetBssid);
+  const isWifiConfigured = Boolean(isExplicitlyCalibrated && targetBssid && targetBssid.trim() !== "");
 
   const isGeoConfigured = Boolean(
-    (radiusMeters > 0 && (latitude !== 0 || longitude !== 0)) ||
-    Boolean(church?.geoFallback?.isConfigured),
+    isExplicitlyCalibrated &&
+    radiusMeters > 0 &&
+    (latitude !== 0 || longitude !== 0)
   );
 
   return (
@@ -362,16 +429,24 @@ export const BeaconSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Dual Redundancy Architecture Callout */}
+      {/* Dynamic Architecture Callout */}
       <div className={styles.systemArchitectureBanner}>
         <Radio size={24} color="#2563EB" style={{ flexShrink: 0 }} />
         <div className={styles.systemArchitectureText}>
-          <strong>Dual-Anchor Redundancy:</strong> Worker clock-ins first
-          authenticate via physical router radio hardware (Section A). If the
-          premises router is offline, the mobile app automatically transitions
-          to verifying attendance against the{" "}
-          <strong>Geofence Perimeter</strong> in Section B within a{" "}
-          <strong>20–30s timeout</strong>.
+          {isGeofenceOnly ? (
+            <>
+              <strong>GPS Geofence Perimeter Mode:</strong> Worker clock-ins authenticate directly via satellite GPS coordinates (<strong style={{ color: "#059669" }}>&lt; 1s instant check-in</strong>). Office Wi-Fi scanning is disabled for your organization.
+            </>
+          ) : (
+            <>
+              <strong>Dual-Anchor Redundancy:</strong> Worker clock-ins first
+              authenticate via physical router radio hardware (Section A). If the
+              premises router is offline, the mobile app automatically transitions
+              to verifying attendance against the{" "}
+              <strong>Geofence Perimeter</strong> in Section B within a{" "}
+              <strong>3.5s timeout</strong>.
+            </>
+          )}
         </div>
       </div>
 
@@ -387,14 +462,19 @@ export const BeaconSettingsPage: React.FC = () => {
               </div>
               <div className={styles.collapsedHeaderTexts}>
                 <div className={styles.collapsedHeaderTitleRow}>
-                  <h3>Dual Presence Anchors Active &amp; Synchronized</h3>
+                  <h3>
+                    {isGeofenceOnly
+                      ? "Satellite GPS Presence Anchor Active"
+                      : "Dual Presence Anchors Active & Synchronized"}
+                  </h3>
                   <span className={styles.activeStatusBadge}>
                     <span className={styles.activeStatusDot} /> Live Cloud Sync
                   </span>
                 </div>
                 <p className={styles.collapsedHeaderSub}>
-                  Workers verify attendance against the premises router BSSID
-                  with automated GPS geofence failover.
+                  {isGeofenceOnly
+                    ? "Workers verify attendance instantly against the high-accuracy geofence perimeter."
+                    : "Workers verify attendance against the premises router BSSID with automated GPS geofence failover."}
                 </p>
               </div>
             </div>
@@ -417,6 +497,7 @@ export const BeaconSettingsPage: React.FC = () => {
                 <div className={styles.summaryCardTitleGroup}>
                   <div
                     className={`${styles.summaryCardIcon} ${styles.iconWifi}`}
+                    style={isGeofenceOnly ? { backgroundColor: "#F1F5F9", color: "#94A3B8" } : undefined}
                   >
                     <Wifi size={20} />
                   </div>
@@ -425,85 +506,151 @@ export const BeaconSettingsPage: React.FC = () => {
                     <span>Hardware Radio Presence</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={styles.editCardBtn}
-                  onClick={handleStartQrSession}
-                  title="Re-calibrate router"
-                >
-                  <Edit3 size={13} />
-                  <span>Re-scan Router</span>
-                </button>
+                {isGeofenceOnly ? (
+                  <button
+                    type="button"
+                    className={styles.editCardBtn}
+                    onClick={() => {
+                      setSelectedMode("HYBRID");
+                      setSetupStep("ROUTER_PREREQUISITE");
+                      setViewMode("QR_STATION");
+                    }}
+                    title="Add office router to enable hybrid verification"
+                  >
+                    <Wifi size={13} />
+                    <span>+ Add Office Router</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.editCardBtn}
+                    onClick={() => {
+                      setSelectedMode("HYBRID");
+                      setSetupStep("ROUTER_PREREQUISITE");
+                      setViewMode("QR_STATION");
+                    }}
+                    title="Re-calibrate router"
+                  >
+                    <Edit3 size={13} />
+                    <span>Re-scan Router</span>
+                  </button>
+                )}
               </div>
 
               <div className={styles.summaryDataRows}>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Configured SSID
-                  </span>
-                  <span className={styles.summaryDataValue}>
-                    {ssidHint || "Pending Calibration"}
-                  </span>
-                </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Hardware MAC (BSSID)
-                  </span>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  >
-                    <span className={styles.summaryDataValueMono}>
-                      {targetBssid || "Pending Calibration"}
-                    </span>
-                    {targetBssid && (
-                      <button
-                        type="button"
-                        onClick={handleCopyMac}
+                {isGeofenceOnly ? (
+                  <>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Configuration Mode
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        GPS Geofence Only
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Hardware MAC (BSSID)
+                      </span>
+                      <span className={styles.summaryDataValue} style={{ color: "#94A3B8" }}>
+                        Not Required / Inactive
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Verification Gateway
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        Bypassed · Instant GPS Verification
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>Status</span>
+                      <span
                         style={{
-                          border: "none",
-                          background: "none",
-                          cursor: "pointer",
-                          color: copiedMac ? "#059669" : "#64748B",
-                          padding: 2,
+                          color: "#64748B",
+                          fontWeight: 600,
+                          fontSize: "0.8rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
                         }}
-                        title="Copy MAC Address"
                       >
-                        {copiedMac ? <Check size={14} /> : <Copy size={14} />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Verification Gateway
-                  </span>
-                  <span className={styles.summaryDataValue}>
-                    Primary · 20–30s Timeout
-                  </span>
-                </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Status</span>
-                  <span
-                    style={{
-                      color: isWifiConfigured ? "#059669" : "#D97706",
-                      fontWeight: 700,
-                      fontSize: "0.8rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    {isWifiConfigured ? (
-                      <>
-                        <CheckCircle2 size={14} /> Active &amp; Locked
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle size={14} /> Unconfigured · Scan QR
-                      </>
-                    )}
-                  </span>
-                </div>
+                        <CheckCircle2 size={14} color="#10B981" /> No Physical Router Needed
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Configured SSID
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        {ssidHint || "Pending Calibration"}
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Hardware MAC (BSSID)
+                      </span>
+                      <div
+                        style={{ display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        <span className={styles.summaryDataValueMono}>
+                          {targetBssid || "Pending Calibration"}
+                        </span>
+                        {targetBssid && (
+                          <button
+                            type="button"
+                            onClick={handleCopyMac}
+                            style={{
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              color: copiedMac ? "#059669" : "#64748B",
+                              padding: 2,
+                            }}
+                            title="Copy MAC Address"
+                          >
+                            {copiedMac ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Verification Gateway
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        Primary · 3.5s Timeout
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>Status</span>
+                      <span
+                        style={{
+                          color: isWifiConfigured ? "#059669" : "#D97706",
+                          fontWeight: 700,
+                          fontSize: "0.8rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        {isWifiConfigured ? (
+                          <>
+                            <CheckCircle2 size={14} /> Active &amp; Locked
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle size={14} /> Unconfigured · Scan QR
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -518,98 +665,198 @@ export const BeaconSettingsPage: React.FC = () => {
                   </div>
                   <div>
                     <h4>Section B — Geofence Anchor</h4>
-                    <span>Calibrated Fail-Safe Perimeter</span>
+                    <span>
+                      {isGeofenceOnly
+                        ? "Primary Verification Perimeter"
+                        : "Calibrated Fail-Safe Perimeter"}
+                    </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={styles.editCardBtn}
-                  onClick={handleStartQrSession}
-                  title="Re-calibrate geofence"
-                >
-                  <Edit3 size={13} />
-                  <span>Re-pin Venue</span>
-                </button>
+                {!isEditingGeoOnWeb ? (
+                  <button
+                    type="button"
+                    className={styles.editCardBtn}
+                    onClick={() => setIsEditingGeoOnWeb(true)}
+                    title="Adjust geofence coordinates and radius directly on web"
+                  >
+                    <Edit3 size={13} />
+                    <span>Adjust on Web</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.editCardBtn}
+                    onClick={() => setIsEditingGeoOnWeb(false)}
+                    title="Close inline editor"
+                  >
+                    <span>Close Editor</span>
+                  </button>
+                )}
               </div>
 
-              <div className={styles.summaryDataRows}>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Calibrated Venue
-                  </span>
-                  <span className={styles.summaryDataValue}>
-                    {pinnedLocationName ||
-                      church?.branchName ||
-                      church?.churchName ||
-                      "Premises Boundary"}
-                  </span>
+              {isEditingGeoOnWeb ? (
+                /* Inline Web Geofence Editor */
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 4 }}>
+                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
+                    Search address or pinpoint coordinates directly on the satellite map, then select allowed perimeter radius:
+                  </p>
+
+                  <LocationSearchPinpoint
+                    currentLat={latitude}
+                    currentLng={longitude}
+                    locationLabel={pinnedLocationName}
+                    isLocating={isLocating}
+                    onUseCurrentLocation={handleUseCurrentLocation}
+                    onCoordinatesChange={(lat, lng, label) => {
+                      setLatitude(lat);
+                      setLongitude(lng);
+                      if (label) setPinnedLocationName(label);
+                    }}
+                  />
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                      Allowed Geofence Radius: <strong>{radiusMeters}m</strong> ({radiusMeters * 2}m diameter)
+                    </label>
+                    <div className={styles.radiusPillRow}>
+                      {RADIUS_OPTIONS.map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          className={`${styles.radiusPill} ${radiusMeters === r ? styles.radiusPillActive : ""}`}
+                          onClick={() => setRadiusMeters(r)}
+                        >
+                          {r}m
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ borderRadius: 10, overflow: "hidden" }}>
+                    <GooglePresenceMap
+                      latitude={latitude}
+                      longitude={longitude}
+                      radiusMeters={radiusMeters}
+                      locationLabel={
+                        pinnedLocationName ||
+                        church?.branchName ||
+                        church?.churchName
+                      }
+                      onCoordinatesChange={(lat, lng) => {
+                        setLatitude(lat);
+                        setLongitude(lng);
+                      }}
+                      height={220}
+                    />
+                  </div>
+
+                  <div className={styles.geoEditActions}>
+                    <button
+                      type="button"
+                      className={styles.cancelGeoBtn}
+                      onClick={() => setIsEditingGeoOnWeb(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.saveGeoBtn}
+                      disabled={isSavingGeo}
+                      onClick={handleSaveGeoOnWeb}
+                    >
+                      <Save size={15} />
+                      <span>{isSavingGeo ? "Saving..." : "Save Coordinates & Radius"}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Precise Coordinates
-                  </span>
-                  <span className={styles.summaryDataValueMono}>
-                    {isGeoConfigured
-                      ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-                      : "Pending Calibration"}
-                  </span>
-                </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>
-                    Perimeter Boundary
-                  </span>
-                  <span className={styles.summaryDataValue}>
-                    {isGeoConfigured
-                      ? `${radiusMeters}m radius (${radiusMeters * 2}m diameter)`
-                      : "Unconfigured"}
-                  </span>
-                </div>
-                <div className={styles.summaryDataRow}>
-                  <span className={styles.summaryDataLabel}>Failover Rule</span>
-                  <span
+              ) : (
+                /* Static Read-Only Overview */
+                <>
+                  <div className={styles.summaryDataRows}>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Calibrated Venue
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        {pinnedLocationName ||
+                          church?.branchName ||
+                          church?.churchName ||
+                          "Premises Boundary"}
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Precise Coordinates
+                      </span>
+                      <span className={styles.summaryDataValueMono}>
+                        {isGeoConfigured
+                          ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                          : "Pending Calibration"}
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        Perimeter Boundary
+                      </span>
+                      <span className={styles.summaryDataValue}>
+                        {isGeoConfigured
+                          ? `${radiusMeters}m radius (${radiusMeters * 2}m diameter)`
+                          : "Unconfigured"}
+                      </span>
+                    </div>
+                    <div className={styles.summaryDataRow}>
+                      <span className={styles.summaryDataLabel}>
+                        {isGeofenceOnly ? "Primary Rule" : "Failover Rule"}
+                      </span>
+                      <span
+                        style={{
+                          color: isGeoConfigured ? "#2563EB" : "#D97706",
+                          fontWeight: 700,
+                          fontSize: "0.8rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        {isGeoConfigured ? (
+                          <>
+                            <CheckCircle2 size={14} />
+                            {isGeofenceOnly
+                              ? "Active · Primary Presence Anchor"
+                              : "Active on 3.5s Timeout"}
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle size={14} /> Unconfigured · Scan QR
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mini Map Preview */}
+                  <div
                     style={{
-                      color: isGeoConfigured ? "#2563EB" : "#D97706",
-                      fontWeight: 700,
-                      fontSize: "0.8rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
+                      marginTop: "4px",
+                      borderRadius: "10px",
+                      overflow: "hidden",
                     }}
                   >
-                    {isGeoConfigured ? (
-                      <>
-                        <CheckCircle2 size={14} /> Active on 20–30s Timeout
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle size={14} /> Unconfigured · Scan QR
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {/* Mini Map Preview */}
-              <div
-                style={{
-                  marginTop: "4px",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                }}
-              >
-                <GooglePresenceMap
-                  latitude={latitude}
-                  longitude={longitude}
-                  radiusMeters={radiusMeters}
-                  locationLabel={
-                    pinnedLocationName ||
-                    church?.branchName ||
-                    church?.churchName
-                  }
-                  height={190}
-                  hideOverlay
-                />
-              </div>
+                    <GooglePresenceMap
+                      latitude={latitude}
+                      longitude={longitude}
+                      radiusMeters={radiusMeters}
+                      locationLabel={
+                        pinnedLocationName ||
+                        church?.branchName ||
+                        church?.churchName
+                      }
+                      height={190}
+                      hideOverlay
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -650,10 +897,18 @@ export const BeaconSettingsPage: React.FC = () => {
                 Mobile Phone Connected!
               </h3>
               <p className={styles.connectedStatusDesc}>
-                Your smartphone ({calibrationSession.platform || "Device"}) is
-                currently linked. Please search or select your premises Wi-Fi
-                router and confirm GPS coordinates on your phone, then tap{" "}
-                <strong>Save &amp; Sync to Web Portal</strong>.
+                {selectedMode === "GEOFENCE_ONLY" ? (
+                  <>
+                    Your smartphone (<strong>{calibrationSession.platform || "Device"}</strong>) is currently linked in{" "}
+                    <strong>GPS Geofence Only</strong> mode. Please confirm your premises coordinates and perimeter radius on your phone, then tap{" "}
+                    <strong>Save &amp; Sync to Web Portal</strong>.
+                  </>
+                ) : (
+                  <>
+                    Your smartphone (<strong>{calibrationSession.platform || "Device"}</strong>) is currently linked. Please search or select your premises Wi-Fi router and confirm GPS coordinates on your phone, then tap{" "}
+                    <strong>Save &amp; Sync to Web Portal</strong>.
+                  </>
+                )}
               </p>
               <div
                 style={{
@@ -679,297 +934,276 @@ export const BeaconSettingsPage: React.FC = () => {
                 Show QR Code Again
               </button>
             </div>
-          ) : (
-            /* Real-time Substate B: Awaiting Mobile Camera Scan */
-            <div className={styles.qrStationContent}>
-              {/* QR Code Container */}
-              <div className={styles.qrCodeFrame}>
-                <div className={styles.qrSvgWrapper}>
-                  <QRCodeSVG
-                    value={qrPayload}
-                    size={260}
-                    level="M"
-                    includeMargin={true}
-                  />
-                </div>
-                {church?.churchCode && (
-                  <div className={styles.qrCodeOrgBadge}>
-                    Organization: {church.churchCode}
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginTop: 10,
-                    padding: "8px 14px",
-                    borderRadius: 8,
-                    backgroundColor: "#EFF6FF",
-                    border: "1px solid #BFDBFE",
-                    color: "#1E40AF",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  <Smartphone size={16} color="#2563EB" />
-                  <span>On Your Mobile Phone: Turn ON Wi-Fi &amp; Location before scanning</span>
-                </div>
+          ) : setupStep === "CHOOSE_MODE" ? (
+            /* Wizard Step 1: Select Architecture */
+            <div className={styles.wizardContainer}>
+              <div className={styles.wizardHeader}>
+                <h3>Step 1: Select Workplace Verification Architecture</h3>
+                <p>
+                  Choose whether your premises has a physical office Wi-Fi router, or if you prefer satellite GPS geofencing only.
+                </p>
               </div>
 
-              {/* 3 Step Guide */}
-              <div className={styles.qrStepsGuide}>
-                <div className={styles.qrStepItem}>
-                  <div className={styles.qrStepNumber}>1</div>
-                  <div className={styles.qrStepText}>
-                    <h4>On Your Mobile Phone: Turn ON Wi-Fi &amp; GPS</h4>
+              <div className={styles.modeCardsGrid}>
+                {/* Option 1: Office Router (Hybrid Mode) */}
+                <div
+                  className={`${styles.modeOptionCard} ${selectedMode === "HYBRID" ? styles.modeOptionCardSelected : ""}`}
+                  onClick={() => {
+                    setSelectedMode("HYBRID");
+                    setSetupStep("ROUTER_PREREQUISITE");
+                  }}
+                >
+                  <div className={styles.modeCardTopRow}>
+                    <div className={`${styles.modeCardIcon} ${styles.iconWifi}`}>
+                      <Wifi size={24} />
+                    </div>
+                    <span className={`${styles.modeCardBadge} ${styles.badgeHybrid}`}>
+                      Recommended
+                    </span>
+                  </div>
+                  <div className={styles.modeCardBody}>
+                    <h4>Physical Office Wi-Fi Router</h4>
                     <p>
-                      Before scanning, pick up your <strong>mobile phone</strong>, swipe down from the top, and ensure your phone's <strong>Wi-Fi</strong> and <strong>Location (GPS)</strong> toggles are switched <strong>ON</strong>. (Your computer desktop does not need Wi-Fi or GPS). Then open the Presenti app.
+                      Dual-Tier Hybrid Security. Smartphones detect your router's hardware MAC address (BSSID) from the air waves, backed by GPS geofencing.
                     </p>
+                    <div className={styles.modeCardFeatureList}>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Maximum anti-spoofing security
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Instant sub-second check-in for workforce
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Automatic GPS fail-safe fallback
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.modeSelectBtn} ${styles.modeSelectBtnPrimary}`}
+                  >
+                    <span>Use Office Router</span>
+                    <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
+                  </button>
+                </div>
+
+                {/* Option 2: Geofence Only */}
+                <div
+                  className={`${styles.modeOptionCard} ${selectedMode === "GEOFENCE_ONLY" ? styles.modeOptionCardSelected : ""}`}
+                  onClick={() => handleSelectModeAndShowQr("GEOFENCE_ONLY")}
+                >
+                  <div className={styles.modeCardTopRow}>
+                    <div className={`${styles.modeCardIcon} ${styles.iconGeo}`}>
+                      <MapPin size={24} />
+                    </div>
+                    <span className={`${styles.modeCardBadge} ${styles.badgeGeofence}`}>
+                      Router-Free
+                    </span>
+                  </div>
+                  <div className={styles.modeCardBody}>
+                    <h4>No Physical Router (GPS Only)</h4>
+                    <p>
+                      Pure Satellite Geofence. Perfect for mobile teams, field workers, pop-up events, or workspaces operating on cellular hotspots.
+                    </p>
+                    <div className={styles.modeCardFeatureList}>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Zero router hardware required
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Uses phone satellite GPS chip
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Fast, lightweight attendance verification
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.modeSelectBtn} ${styles.modeSelectBtnSecondary}`}
+                  >
+                    <span>Use GPS Geofence Only</span>
+                    <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : setupStep === "ROUTER_PREREQUISITE" ? (
+            /* Wizard Step 2: Checklist before scanning */
+            <div className={styles.wizardContainer}>
+              <div className={styles.wizardHeader}>
+                <h3>Step 2: Office Wi-Fi Prerequisite Checklist</h3>
+                <p>
+                  Please verify these 2 quick conditions before pairing with your smartphone:
+                </p>
+              </div>
+
+              <div className={styles.prerequisiteBox}>
+                {/* Hotspot Alert Banner */}
+                <div className={styles.prerequisiteWarningBanner}>
+                  <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <strong>Mobile Hotspot Notice:</strong> If this laptop is currently receiving internet from your phone's personal hotspot, please switch both devices to your office router now. Alternatively, you can click <strong>"Back"</strong> below to select <em>GPS Geofence Only</em> (no router needed).
                   </div>
                 </div>
 
-                <div className={styles.qrStepItem}>
-                  <div className={styles.qrStepNumber}>2</div>
-                  <div className={styles.qrStepText}>
-                    <h4>Press &amp; Hold the Logo for 5 Seconds</h4>
-                    <p>
-                      On the mobile sign-in / welcome screen, press and hold the{" "}
-                      <strong>Presenti Logo</strong> for 5 seconds. The device will vibrate and instantly launch the{" "}
-                      <strong>Calibration QR Scanner</strong>.
-                    </p>
-                    <p
-                      style={{
-                        marginTop: 4,
-                        fontSize: "0.8rem",
-                        color: "#64748B",
-                      }}
-                    >
-                      <em>
-                        Secret admin gesture — completely invisible to regular workers for security.
-                        (If already signed in, you can also press and hold the header logo on the dashboard).
-                      </em>
-                    </p>
+                <div className={styles.prerequisiteList}>
+                  <div className={styles.prerequisiteItem}>
+                    <div className={styles.prerequisiteNumber}>1</div>
+                    <div className={styles.prerequisiteText}>
+                      <h5>Connect Both Devices to Office Wi-Fi</h5>
+                      <p>
+                        Ensure both this <strong>computer/laptop</strong> and your <strong>smartphone</strong> are actively connected to the physical Wi-Fi router you want to calibrate as your workplace beacon.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={styles.prerequisiteItem}>
+                    <div className={styles.prerequisiteNumber}>2</div>
+                    <div className={styles.prerequisiteText}>
+                      <h5>Switch ON Phone Wi-Fi &amp; Location</h5>
+                      <p>
+                        Swipe down from the top of your phone screen and confirm that both the <strong>Wi-Fi</strong> and <strong>Location (GPS)</strong> toggles are turned <strong>ON</strong>.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className={styles.qrStepItem}>
-                  <div className={styles.qrStepNumber}>3</div>
-                  <div className={styles.qrStepText}>
-                    <h4>Point Camera at this QR Code</h4>
-                    <p>
-                      Scan the QR code on your computer screen. The phone will
-                      instantly detect nearby physical Wi-Fi radios and acquire
-                      high-accuracy GPS coordinates!
-                    </p>
+                <div className={styles.prerequisiteActions}>
+                  <button
+                    type="button"
+                    className={styles.backStepBtn}
+                    onClick={() => setSetupStep("CHOOSE_MODE")}
+                  >
+                    ← Back to Architecture Options
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.proceedStepBtn}
+                    onClick={() => handleSelectModeAndShowQr("HYBRID")}
+                  >
+                    <span>I'm Connected → Show QR Code</span>
+                    <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Real-time Substate B: Awaiting Mobile Camera Scan (SHOW_QR) */
+            <div>
+              {/* Active Mode Bar with Back Switcher */}
+              <div className={styles.activeModeBar}>
+                <div className={styles.activeModeBadgeLabel}>
+                  {selectedMode === "GEOFENCE_ONLY" ? (
+                    <>
+                      <MapPin size={16} color="#16A34A" />
+                      <span>Target Architecture: GPS Satellite Geofence Only (Router-Free)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wifi size={16} color="#0284C7" />
+                      <span>Target Architecture: Physical Wi-Fi Router + GPS (Hybrid)</span>
+                    </>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className={styles.changeModeLinkBtn}
+                  onClick={() => setSetupStep("CHOOSE_MODE")}
+                >
+                  Change Setup Architecture
+                </button>
+              </div>
+
+              <div className={styles.qrStationContent}>
+                {/* QR Code Container */}
+                <div className={styles.qrCodeFrame}>
+                  <div className={styles.qrSvgWrapper}>
+                    <QRCodeSVG
+                      value={qrPayload}
+                      size={260}
+                      level="M"
+                      includeMargin={true}
+                    />
                   </div>
+                  {church?.churchCode && (
+                    <div className={styles.qrCodeOrgBadge}>
+                      Organization: {church.churchCode}
+                    </div>
+                  )}
                 </div>
 
-                {isWifiConfigured && (
-                  <div style={{ marginTop: "10px" }}>
-                    <button
-                      type="button"
-                      className={styles.restartSessionBtn}
-                      onClick={() => setViewMode("OVERVIEW")}
-                    >
-                      ← Back to Calibrated Overview
-                    </button>
+                {/* 3 Step Guide */}
+                <div className={styles.qrStepsGuide}>
+                  <div className={styles.qrStepItem}>
+                    <div className={styles.qrStepNumber}>1</div>
+                    <div className={styles.qrStepText}>
+                      <h4>
+                        {selectedMode === "GEOFENCE_ONLY"
+                          ? "On Your Mobile Phone: Turn ON Location (GPS)"
+                          : "On Your Mobile Phone: Turn ON Wi-Fi & GPS"}
+                      </h4>
+                      <p>
+                        {selectedMode === "GEOFENCE_ONLY"
+                          ? "Ensure your phone's Location (GPS) sensor toggle is ON in quick settings, then open the Presenti app."
+                          : "Ensure your phone is connected to your office Wi-Fi with Location (GPS) turned ON, then open the Presenti app."}
+                      </p>
+                    </div>
                   </div>
-                )}
+
+                  <div className={styles.qrStepItem}>
+                    <div className={styles.qrStepNumber}>2</div>
+                    <div className={styles.qrStepText}>
+                      <h4>Press &amp; Hold the Logo for 5 Seconds</h4>
+                      <p>
+                        On the mobile sign-in / welcome screen, press and hold the{" "}
+                        <strong>Presenti Logo</strong> for 5 seconds. The device
+                        will vibrate and instantly launch the{" "}
+                        <strong>Calibration QR Scanner</strong>.
+                      </p>
+                      <p
+                        style={{
+                          marginTop: 4,
+                          fontSize: "0.8rem",
+                          color: "#64748B",
+                        }}
+                      >
+                        <em>
+                          Secret admin gesture — completely invisible to regular
+                          workers for security.
+                        </em>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={styles.qrStepItem}>
+                    <div className={styles.qrStepNumber}>3</div>
+                    <div className={styles.qrStepText}>
+                      <h4>Point Camera at this QR Code</h4>
+                      <p>
+                        {selectedMode === "GEOFENCE_ONLY"
+                          ? "Scan the QR code. Your phone will instantly lock satellite GPS coordinates and allow you to set your premises perimeter!"
+                          : "Scan the QR code. Your phone will detect the office router BSSID from the air waves and acquire high-accuracy GPS coordinates!"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(isWifiConfigured || isGeoConfigured) && (
+                    <div style={{ marginTop: "10px" }}>
+                      <button
+                        type="button"
+                        className={styles.restartSessionBtn}
+                        onClick={() => setViewMode("OVERVIEW")}
+                      >
+                        ← Back to Calibrated Overview
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </div>
       )}
-
-      {/* ====================================================================
-          COLLAPSED MANUAL INPUT OVERRIDE (Desktop Fallback)
-          ==================================================================== */}
-      <div className={styles.manualAccordionBox}>
-        <button
-          type="button"
-          className={styles.manualAccordionHeader}
-          onClick={() => setManualOpen(!manualOpen)}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1rem" }}>⚙️</span>
-            <span>Advanced: Manual Input Override (Desktop Fallback)</span>
-          </div>
-          {manualOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {manualOpen && (
-          <form
-            onSubmit={handleSaveManual}
-            className={styles.manualAccordionBody}
-          >
-            <p style={{ margin: 0, fontSize: "0.825rem", color: "#64748B" }}>
-              Use this form only if mobile QR pairing is not possible. You can
-              manually enter the router SSID and hardware BSSID (MAC), and
-              pinpoint coordinates using the satellite map.
-            </p>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "20px",
-              }}
-            >
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "#334155",
-                    marginBottom: 6,
-                  }}
-                >
-                  Premises Router SSID Label *
-                </label>
-                <input
-                  type="text"
-                  value={ssidHint}
-                  onChange={(e) => setSsidHint(e.target.value)}
-                  placeholder="e.g. Office_Main_5G"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.875rem",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "#334155",
-                    marginBottom: 6,
-                  }}
-                >
-                  Hardware BSSID (MAC Address) *
-                </label>
-                <input
-                  type="text"
-                  value={targetBssid}
-                  onChange={(e) => setTargetBssid(e.target.value)}
-                  placeholder="e.g. 0c:61:f9:65:8f:07"
-                  className="mono"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.875rem",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Manual Pinpoint on Satellite Map */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  color: "#334155",
-                  marginBottom: 8,
-                }}
-              >
-                Geofence Centerpoint &amp; Allowed Boundary
-              </label>
-              <LocationSearchPinpoint
-                currentLat={latitude}
-                currentLng={longitude}
-                locationLabel={pinnedLocationName}
-                isLocating={isLocating}
-                onUseCurrentLocation={handleUseCurrentLocation}
-                onCoordinatesChange={(lat, lng, label) => {
-                  setLatitude(lat);
-                  setLongitude(lng);
-                  if (label) setPinnedLocationName(label);
-                }}
-              />
-              <div
-                style={{ marginTop: 12, borderRadius: 10, overflow: "hidden" }}
-              >
-                <GooglePresenceMap
-                  latitude={latitude}
-                  longitude={longitude}
-                  radiusMeters={radiusMeters}
-                  locationLabel={
-                    pinnedLocationName ||
-                    church?.branchName ||
-                    church?.churchName
-                  }
-                  onCoordinatesChange={(lat, lng) => {
-                    setLatitude(lat);
-                    setLongitude(lng);
-                  }}
-                  height={240}
-                />
-              </div>
-            </div>
-
-            {/* Radius options */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  color: "#334155",
-                  marginBottom: 8,
-                }}
-              >
-                Allowed Geofence Perimeter: {radiusMeters}m radius (
-                {radiusMeters * 2}m diameter)
-              </label>
-              <div className={styles.radiusSelector}>
-                {RADIUS_OPTIONS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    className={`${styles.radiusOption} ${radiusMeters === r ? styles.radiusOptionActive : ""}`}
-                    onClick={() => setRadiusMeters(r)}
-                  >
-                    {r}m
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div
-              style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}
-            >
-              <button
-                type="button"
-                className={styles.cancelEditBtn}
-                onClick={() => setManualOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSavingManual}
-                className={styles.editMainBtn}
-              >
-                <Save size={16} />
-                <span>
-                  {isSavingManual ? "Saving..." : "Save Manual Anchors"}
-                </span>
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
     </div>
   );
 };

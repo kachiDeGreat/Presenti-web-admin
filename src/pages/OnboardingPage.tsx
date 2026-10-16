@@ -202,13 +202,6 @@ export const OnboardingPage: React.FC = () => {
   const [arrivalCutoff, setArrivalCutoff] = useState("07:30");
   const [lateTolerance, setLateTolerance] = useState("07:45");
   const [syncCutoff, setSyncCutoff] = useState("12:00");
-  const [initialCoords, setInitialCoords] = useState<{
-    lat: number;
-    lng: number;
-  }>({
-    lat: 4.975,
-    lng: 8.3417,
-  });
 
   // Real-time regex and attendance window order validation
   const timeValidation = validateAttendanceWindow(
@@ -307,9 +300,7 @@ export const OnboardingPage: React.FC = () => {
       .join(", ");
     setBranchName(fullBranch);
 
-    if (newState && DEFAULT_STATE_COORDS[newState]) {
-      setInitialCoords(DEFAULT_STATE_COORDS[newState]);
-    }
+
 
     if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
       setChurchCode(generateUniqueChurchCode(churchName, city, newState));
@@ -481,11 +472,13 @@ export const OnboardingPage: React.FC = () => {
           targetBssid: "",
         },
         geoFallback: {
-          latitude: initialCoords.lat,
-          longitude: initialCoords.lng,
+          latitude: 0,
+          longitude: 0,
           radiusMeters: 0,
           isConfigured: false,
+          isCalibrated: false,
         },
+        isCalibrated: false,
         policySettings: {
           serviceDays,
           arrivalCutoff,

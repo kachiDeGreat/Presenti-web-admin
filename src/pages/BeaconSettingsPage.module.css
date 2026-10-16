@@ -1031,4 +1031,401 @@
   gap: 24px;
 }
 
+/* WIZARD MODE SELECTION STYLES */
+.wizardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.wizardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wizardHeader h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.wizardHeader p {
+  font-size: 0.875rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modeCardsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .modeCardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modeOptionCard {
+  border: 2px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
+  background-color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  position: relative;
+}
+
+.modeOptionCard:hover {
+  border-color: #0284C7;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.12);
+}
+
+.modeOptionCardSelected {
+  border-color: #0284C7;
+  background-color: #F8FAFC;
+  box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.15);
+}
+
+.modeCardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modeCardIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeCardBadge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.badgeHybrid {
+  background-color: #EFF6FF;
+  color: #0284C7;
+  border: 1px solid #BAE6FD;
+}
+
+.badgeGeofence {
+  background-color: #F0FDF4;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+
+.modeCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.modeCardBody h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.modeCardBody p {
+  font-size: 0.85rem;
+  color: #64748B;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modeCardFeatureList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.modeCardFeatureItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.modeCardFeatureItem svg {
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.modeSelectBtn {
+  margin-top: auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.modeSelectBtnPrimary {
+  background-color: #0284C7;
+  color: #FFFFFF;
+}
+
+.modeSelectBtnPrimary:hover {
+  background-color: #0369A1;
+}
+
+.modeSelectBtnSecondary {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.modeSelectBtnSecondary:hover {
+  background-color: #E2E8F0;
+}
+
+/* PREREQUISITE CHECKLIST STYLES */
+.prerequisiteBox {
+  background-color: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prerequisiteWarningBanner {
+  background-color: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #92400E;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.prerequisiteList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.prerequisiteItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.prerequisiteNumber {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #0284C7;
+  color: #FFFFFF;
+  font-size: 0.775rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.prerequisiteText h5 {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 3px 0;
+}
+
+.prerequisiteText p {
+  font-size: 0.825rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.prerequisiteActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.backStepBtn {
+  background: none;
+  border: 1px solid #CBD5E1;
+  padding: 9px 18px;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backStepBtn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+.proceedStepBtn {
+  background-color: #0284C7;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proceedStepBtn:hover {
+  background-color: #0369A1;
+}
+
+.activeModeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  margin-bottom: 20px;
+}
+
+.activeModeBadgeLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0369A1;
+}
+
+.changeModeLinkBtn {
+  background: none;
+  border: none;
+  color: #0284C7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.changeModeLinkBtn:hover {
+  color: #0369A1;
+}
+
+/* INLINE GEOFENCE EDITING ON WEB */
+.radiusPillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 8px 0;
+}
+
+.radiusPill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1.5px solid #CBD5E1;
+  background-color: #FFFFFF;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radiusPill:hover {
+  border-color: #0284C7;
+  color: #0284C7;
+}
+
+.radiusPillActive {
+  background-color: #EFF6FF;
+  border-color: #0284C7;
+  color: #0284C7;
+  font-weight: 700;
+}
+
+.geoEditActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.saveGeoBtn {
+  background-color: #0284C7;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.saveGeoBtn:hover {
+  background-color: #0369A1;
+}
+
+.cancelGeoBtn {
+  background: none;
+  border: 1px solid #CBD5E1;
+  color: #64748B;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelGeoBtn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
 
