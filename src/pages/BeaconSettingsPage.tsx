@@ -30,16 +30,7 @@ const RADIUS_OPTIONS = [10, 20, 30, 40, 50, 80, 100];
 export const BeaconSettingsPage: React.FC = () => {
   const { church, updateChurch } = useAuth();
 
-  // Anchors state
-  const [ssidHint, setSsidHint] = useState("");
-  const [targetBssid, setTargetBssid] = useState("");
-  const [latitude, setLatitude] = useState<number>(4.975);
-  const [longitude, setLongitude] = useState<number>(8.3417);
-  const [radiusMeters, setRadiusMeters] = useState<number>(10);
-  const [pinnedLocationName, setPinnedLocationName] = useState<string>("");
-  const [isCalibratedLive, setIsCalibratedLive] = useState<boolean>(false);
-
-  // View state: OVERVIEW (if already calibrated) vs QR_STATION (to calibrate)
+  // Synchronous initialization from church context if present
   const isInitiallyCalibrated = Boolean(
     church?.isCalibrated ||
     church?.geoFallback?.isCalibrated ||
@@ -50,12 +41,23 @@ export const BeaconSettingsPage: React.FC = () => {
       Number(church?.geoFallback?.longitude ?? 0) !== 0)
   );
 
+  const initialMode: "HYBRID" | "GEOFENCE_ONLY" =
+    church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" ? "GEOFENCE_ONLY" : "HYBRID";
+
+  // Anchors state with synchronous defaults from church
+  const [ssidHint, setSsidHint] = useState<string>(() => (isInitiallyCalibrated ? church?.beaconConfig?.ssidHint || "" : ""));
+  const [targetBssid, setTargetBssid] = useState<string>(() => (isInitiallyCalibrated ? church?.beaconConfig?.targetBssid || "" : ""));
+  const [latitude, setLatitude] = useState<number>(() => (isInitiallyCalibrated ? Number(church?.geoFallback?.latitude ?? 4.975) : 4.975));
+  const [longitude, setLongitude] = useState<number>(() => (isInitiallyCalibrated ? Number(church?.geoFallback?.longitude ?? 8.3417) : 8.3417));
+  const [radiusMeters, setRadiusMeters] = useState<number>(() => (isInitiallyCalibrated ? Number(church?.geoFallback?.radiusMeters ?? 10) : 10));
+  const [pinnedLocationName, setPinnedLocationName] = useState<string>(() => (isInitiallyCalibrated ? church?.branchName || church?.churchName || "" : ""));
+  const [isCalibratedLive, setIsCalibratedLive] = useState<boolean>(() => isInitiallyCalibrated);
+
+  // View state: OVERVIEW (if already calibrated) vs QR_STATION (to calibrate)
   const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">(
     isInitiallyCalibrated ? "OVERVIEW" : "QR_STATION",
   );
-  const [hasInitializedView, setHasInitializedView] = useState<boolean>(
-    Boolean(church),
-  );
+  const [isDataMounted, setIsDataMounted] = useState<boolean>(false);
 
   // Session notification tracking refs to prevent duplicate toasts and revisit toasts
   const lastAnnouncedSessionRef = useRef<{
@@ -67,7 +69,7 @@ export const BeaconSettingsPage: React.FC = () => {
   // Setup Wizard State
   type SetupStep = "CHOOSE_MODE" | "ROUTER_PREREQUISITE" | "SHOW_QR";
   const [setupStep, setSetupStep] = useState<SetupStep>("CHOOSE_MODE");
-  const [selectedMode, setSelectedMode] = useState<"HYBRID" | "GEOFENCE_ONLY">("HYBRID");
+  const [selectedMode, setSelectedMode] = useState<"HYBRID" | "GEOFENCE_ONLY">(initialMode);
 
   // Real-time Calibration Session state
   const [calibrationSession, setCalibrationSession] = useState<{
@@ -233,12 +235,13 @@ export const BeaconSettingsPage: React.FC = () => {
       setRadiusMeters(savedRadius);
       setPinnedLocationName(savedLabel);
 
-      if (!hasInitializedView) {
-        setViewMode(isExplicitlyCalibrated ? "OVERVIEW" : "QR_STATION");
-        setHasInitializedView(true);
+      if (church.beaconConfig?.verificationMode) {
+        setSelectedMode(church.beaconConfig.verificationMode);
       }
+      setViewMode(isExplicitlyCalibrated ? "OVERVIEW" : "QR_STATION");
+      setIsDataMounted(true);
     }
-  }, [church, hasInitializedView]);
+  }, [church]);
 
   // Real-time Firestore session listener: churches/{churchId}/calibration/session
   useEffect(() => {
@@ -396,10 +399,27 @@ export const BeaconSettingsPage: React.FC = () => {
     return () => unsubscribe();
   }, [church?.id]);
 
-  // Reset or start new QR calibration session
-  const handleStartQrSession = async () => {
+  // Start or restart QR calibration session with intelligent architecture routing
+  const handleStartQrSession = async (overrideMode?: "HYBRID" | "GEOFENCE_ONLY") => {
+    const isGeofence =
+      church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" ||
+      (selectedMode === "GEOFENCE_ONLY" && !targetBssid);
+
+    const effectiveMode: "HYBRID" | "GEOFENCE_ONLY" =
+      overrideMode || (isGeofence ? "GEOFENCE_ONLY" : "HYBRID");
+
+    setSelectedMode(effectiveMode);
     setViewMode("QR_STATION");
-    setSetupStep("CHOOSE_MODE");
+
+    // Automatically push to respective workflow:
+    // - Geofence-Only -> Directly display Geofence QR code
+    // - Office Router -> Display Router prerequisite checklist
+    if (effectiveMode === "GEOFENCE_ONLY") {
+      setSetupStep("SHOW_QR");
+    } else {
+      setSetupStep("ROUTER_PREREQUISITE");
+    }
+
     setCalibrationSession({ status: "AWAITING_SCAN" });
     lastAnnouncedSessionRef.current = {};
 
@@ -410,12 +430,14 @@ export const BeaconSettingsPage: React.FC = () => {
         await Promise.all([
           updateDoc(churchRef, {
             "calibrationSession.status": "AWAITING_SCAN",
+            "calibrationSession.mode": effectiveMode,
             "calibrationSession.startedAt": new Date().toISOString(),
           }).catch(() => {}),
           setDoc(
             sessionRef,
             {
               status: "AWAITING_SCAN",
+              mode: effectiveMode,
               startedAt: new Date().toISOString(),
             },
             { merge: true },
@@ -500,7 +522,7 @@ export const BeaconSettingsPage: React.FC = () => {
     (latitude !== 0 || longitude !== 0)
   );
 
-  if (!hasInitializedView) {
+  if (!isDataMounted) {
     return (
       <div className={styles.pageContainer}>
         <div className={styles.loadingContainer}>
@@ -585,7 +607,7 @@ export const BeaconSettingsPage: React.FC = () => {
             <button
               type="button"
               className={styles.recalibrateActionBtn}
-              onClick={handleStartQrSession}
+              onClick={() => handleStartQrSession()}
               title="Pair with mobile app to re-calibrate anchors"
             >
               <QrCode size={18} />
@@ -613,11 +635,7 @@ export const BeaconSettingsPage: React.FC = () => {
                   <button
                     type="button"
                     className={styles.editCardBtn}
-                    onClick={() => {
-                      setSelectedMode("HYBRID");
-                      setSetupStep("ROUTER_PREREQUISITE");
-                      setViewMode("QR_STATION");
-                    }}
+                    onClick={() => handleStartQrSession("HYBRID")}
                     title="Add office router to enable hybrid verification"
                   >
                     <Wifi size={13} />
@@ -627,11 +645,7 @@ export const BeaconSettingsPage: React.FC = () => {
                   <button
                     type="button"
                     className={styles.editCardBtn}
-                    onClick={() => {
-                      setSelectedMode("HYBRID");
-                      setSetupStep("ROUTER_PREREQUISITE");
-                      setViewMode("QR_STATION");
-                    }}
+                    onClick={() => handleStartQrSession("HYBRID")}
                     title="Re-calibrate router"
                   >
                     <Edit3 size={13} />
@@ -1032,7 +1046,7 @@ export const BeaconSettingsPage: React.FC = () => {
               <button
                 type="button"
                 className={styles.restartSessionBtn}
-                onClick={handleStartQrSession}
+                onClick={() => handleStartQrSession()}
               >
                 Show QR Code Again
               </button>
