@@ -236,17 +236,19 @@ export const DashboardPage: React.FC = () => {
           </span>
         </div>
 
-        <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Wi-Fi Verified</span>
-          <span className={styles.metricValue} style={{ color: "#059669" }}>
-            {wifiVerifiedCount}
-          </span>
-          <span className={styles.metricSubtext}>
-            {totalCheckedIn > 0
-              ? `${Math.round((wifiVerifiedCount / totalCheckedIn) * 100)}% via router hardware`
-              : "Primary presence anchor"}
-          </span>
-        </div>
+        {!isGeofenceOnly && (
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>Wi-Fi Verified</span>
+            <span className={styles.metricValue} style={{ color: "#059669" }}>
+              {wifiVerifiedCount}
+            </span>
+            <span className={styles.metricSubtext}>
+              {totalCheckedIn > 0
+                ? `${Math.round((wifiVerifiedCount / totalCheckedIn) * 100)}% via router hardware`
+                : "Primary presence anchor"}
+            </span>
+          </div>
+        )}
 
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>GPS Geofence Verified</span>
@@ -255,8 +257,10 @@ export const DashboardPage: React.FC = () => {
           </span>
           <span className={styles.metricSubtext}>
             {totalCheckedIn > 0
-              ? `${Math.round((geoVerifiedCount / totalCheckedIn) * 100)}% via 10m perimeter`
-              : "Fail-safe presence anchor"}
+              ? `${Math.round((geoVerifiedCount / totalCheckedIn) * 100)}% via ${church?.geoFallback?.radiusMeters || 10}m perimeter`
+              : isGeofenceOnly
+                ? "Primary presence anchor"
+                : "Fail-safe presence anchor"}
           </span>
         </div>
 
@@ -321,20 +325,24 @@ export const DashboardPage: React.FC = () => {
               >
                 All Check-Ins
               </button>
-              <button
-                type="button"
-                onClick={() => setVerificationFilter("WIFI_BSSID")}
-                className={`${styles.statusFilterBtn} ${verificationFilter === "WIFI_BSSID" ? styles.statusFilterBtnActive : ""}`}
-              >
-                Wi-Fi
-              </button>
-              <button
-                type="button"
-                onClick={() => setVerificationFilter("GEO_FALLBACK")}
-                className={`${styles.statusFilterBtn} ${verificationFilter === "GEO_FALLBACK" ? styles.statusFilterBtnActive : ""}`}
-              >
-                GPS Geofence
-              </button>
+              {!isGeofenceOnly && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setVerificationFilter("WIFI_BSSID")}
+                    className={`${styles.statusFilterBtn} ${verificationFilter === "WIFI_BSSID" ? styles.statusFilterBtnActive : ""}`}
+                  >
+                    Wi-Fi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVerificationFilter("GEO_FALLBACK")}
+                    className={`${styles.statusFilterBtn} ${verificationFilter === "GEO_FALLBACK" ? styles.statusFilterBtnActive : ""}`}
+                  >
+                    GPS Geofence
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

@@ -40,10 +40,22 @@ export const BeaconSettingsPage: React.FC = () => {
   const [isCalibratedLive, setIsCalibratedLive] = useState<boolean>(false);
 
   // View state: OVERVIEW (if already calibrated) vs QR_STATION (to calibrate)
-  const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">(
-    "QR_STATION",
+  const isInitiallyCalibrated = Boolean(
+    church?.isCalibrated ||
+    church?.geoFallback?.isCalibrated ||
+    (church?.geoFallback?.isConfigured &&
+      (church?.beaconConfig?.targetBssid ||
+        church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY")) ||
+    (Number(church?.geoFallback?.latitude ?? 0) !== 0 &&
+      Number(church?.geoFallback?.longitude ?? 0) !== 0)
   );
-  const [hasInitializedView, setHasInitializedView] = useState<boolean>(false);
+
+  const [viewMode, setViewMode] = useState<"OVERVIEW" | "QR_STATION">(
+    isInitiallyCalibrated ? "OVERVIEW" : "QR_STATION",
+  );
+  const [hasInitializedView, setHasInitializedView] = useState<boolean>(
+    Boolean(church),
+  );
 
   // Session notification tracking refs to prevent duplicate toasts and revisit toasts
   const lastAnnouncedSessionRef = useRef<{
@@ -64,6 +76,39 @@ export const BeaconSettingsPage: React.FC = () => {
     completedAt?: string;
     platform?: string;
   }>({ status: "AWAITING_SCAN" });
+
+  const calibrationSessionRef = useRef(calibrationSession);
+  calibrationSessionRef.current = calibrationSession;
+  const viewModeRef = useRef(viewMode);
+  viewModeRef.current = viewMode;
+
+  // Kill signal on page unmount / route leave / window close if pairing was active
+  useEffect(() => {
+    const notifyMobileDisconnect = () => {
+      const isConnected = (calibrationSessionRef.current.status as string) === "CONNECTED";
+      if (db && church?.id && isConnected) {
+        const churchRef = doc(db, "churches", church.id);
+        const sessionRef = doc(db, "churches", church.id, "calibration", "session");
+        const payload = {
+          status: "DISCONNECTED",
+          disconnectedAt: new Date().toISOString(),
+          reason: "ADMIN_LEFT_PAGE",
+        };
+        updateDoc(churchRef, {
+          "calibrationSession.status": "DISCONNECTED",
+          "calibrationSession.disconnectedAt": payload.disconnectedAt,
+          "calibrationSession.reason": "ADMIN_LEFT_PAGE",
+        }).catch(() => {});
+        setDoc(sessionRef, payload, { merge: true }).catch(() => {});
+      }
+    };
+
+    window.addEventListener("beforeunload", notifyMobileDisconnect);
+    return () => {
+      window.removeEventListener("beforeunload", notifyMobileDisconnect);
+      notifyMobileDisconnect();
+    };
+  }, [church?.id]);
 
   // Web Geofence direct editing state
   const [isEditingGeoOnWeb, setIsEditingGeoOnWeb] = useState(false);
@@ -454,6 +499,24 @@ export const BeaconSettingsPage: React.FC = () => {
     radiusMeters > 0 &&
     (latitude !== 0 || longitude !== 0)
   );
+
+  if (!hasInitializedView) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingCard}>
+            <RefreshCw size={32} className={styles.spinner} color="#2563EB" />
+            <h3 style={{ margin: "16px 0 6px 0", fontSize: "1.1rem", color: "#1E293B", fontWeight: 700 }}>
+              Checking Presence Anchors...
+            </h3>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B" }}>
+              Retrieving premises configuration and calibration parameters
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.pageContainer}>
@@ -977,6 +1040,17 @@ export const BeaconSettingsPage: React.FC = () => {
           ) : setupStep === "CHOOSE_MODE" ? (
             /* Wizard Step 1: Select Architecture */
             <div className={styles.wizardContainer}>
+              {isExplicitlyCalibrated && (
+                <div style={{ marginBottom: "16px" }}>
+                  <button
+                    type="button"
+                    className={styles.backStepBtn}
+                    onClick={() => setViewMode("OVERVIEW")}
+                  >
+                    ← Cancel &amp; Return to Active Anchors
+                  </button>
+                </div>
+              )}
               <div className={styles.wizardHeader}>
                 <h3>Step 1: Select Workplace Verification Architecture</h3>
                 <p>
@@ -1109,13 +1183,23 @@ export const BeaconSettingsPage: React.FC = () => {
                 </div>
 
                 <div className={styles.prerequisiteActions}>
-                  <button
-                    type="button"
-                    className={styles.backStepBtn}
-                    onClick={() => setSetupStep("CHOOSE_MODE")}
-                  >
-                    ← Back to Architecture Options
-                  </button>
+                  {isExplicitlyCalibrated ? (
+                    <button
+                      type="button"
+                      className={styles.backStepBtn}
+                      onClick={() => setViewMode("OVERVIEW")}
+                    >
+                      ← Cancel &amp; Back to Active Anchors
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.backStepBtn}
+                      onClick={() => setSetupStep("CHOOSE_MODE")}
+                    >
+                      ← Back to Architecture Options
+                    </button>
+                  )}
                   <button
                     type="button"
                     className={styles.proceedStepBtn}
@@ -1145,13 +1229,25 @@ export const BeaconSettingsPage: React.FC = () => {
                     </>
                   )}
                 </div>
-                <button
-                  type="button"
-                  className={styles.changeModeLinkBtn}
-                  onClick={() => setSetupStep("CHOOSE_MODE")}
-                >
-                  Change Setup Architecture
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {isExplicitlyCalibrated && (
+                    <button
+                      type="button"
+                      className={styles.backStepBtn}
+                      style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+                      onClick={() => setViewMode("OVERVIEW")}
+                    >
+                      ← Return to Overview
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.changeModeLinkBtn}
+                    onClick={() => setSetupStep("CHOOSE_MODE")}
+                  >
+                    Change Setup Architecture
+                  </button>
+                </div>
               </div>
 
               <div className={styles.qrStationContent}>
