@@ -9,7 +9,7 @@ export const AuthPage: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  const { user, church, loading, signInWithGoogle } = useAuth();
+  const { user, church, loading, signInWithGoogle, signInWithGoogleRedirect } = useAuth();
   const navigate = useNavigate();
 
   // Active Session Guard: Auto-redirect if user already has an active authenticated session
@@ -76,6 +76,18 @@ export const AuthPage: React.FC = () => {
       }
     } finally {
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleRedirectSignIn = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsGoogleLoading(true);
+    try {
+      await signInWithGoogleRedirect();
+    } catch (err: unknown) {
+      console.error("Google redirect sign-in error:", err);
+      setIsGoogleLoading(false);
+      toast.error("Could not redirect to Google authentication.");
     }
   };
 
@@ -164,6 +176,27 @@ export const AuthPage: React.FC = () => {
                   : "Continue with Google"}
               </span>
             </button>
+
+            {/* Direct Redirect Fallback for browsers that block or freeze popups */}
+            <div style={{ marginTop: "1rem", textAlign: "center" }}>
+              <button
+                type="button"
+                onClick={handleGoogleRedirectSignIn}
+                disabled={isGoogleLoading}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563EB",
+                  fontSize: "0.825rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: "6px 8px",
+                  lineHeight: 1.4,
+                }}
+              >
+                Popup blank or blocked? Click here to Sign In with Direct Page Redirect &rarr;
+              </button>
+            </div>
           </div>
 
           {/* Verification & Architecture Card */}

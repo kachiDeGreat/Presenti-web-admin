@@ -87,9 +87,4 @@ function wifiScanPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), wifiScanPlugin()],
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-    },
-  },
 });

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   signInWithPopup,
+  signInWithRedirect,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -33,6 +34,7 @@ interface AuthContextType {
   church: Church | null;
   loading: boolean;
   signInWithGoogle: () => Promise<{ isNewUser: boolean; churchExists: boolean }>;
+  signInWithGoogleRedirect: () => Promise<void>;
   login: (email: string, pass: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
@@ -182,6 +184,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { isNewUser: false, churchExists: true };
       }
       return { isNewUser: true, churchExists: false };
+    }
+  };
+
+  const signInWithGoogleRedirect = async (): Promise<void> => {
+    if (isFirebaseConfigured && auth) {
+      await signInWithRedirect(auth, googleProvider);
     }
   };
 
@@ -422,6 +430,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         church,
         loading,
         signInWithGoogle,
+        signInWithGoogleRedirect,
         login,
         register,
         logout,
