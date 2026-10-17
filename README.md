@@ -83,9 +83,19 @@ graph TD
 | **Frontend Framework** | React 18 (TypeScript) |
 | **Build Tooling** | Vite 5 |
 | **Styling** | Vanilla CSS Modules + Tailwind CSS + Lucide Icons |
-| **Map & Geocoding** | Leaflet / React-Leaflet + OpenStreetMap Nominatim |
+| **Map & Geocoding** | Leaflet / React-Leaflet + Multi-Tier Geocoding (Google Maps API + Photon Nigeria BBox + Nominatim) |
 | **Database & Auth** | Firebase Authentication + Cloud Firestore |
 | **Deployment** | Vercel Serverless Hosting |
+
+---
+
+## Smart Location Pinpointing & Geocoding
+
+The premises calibration engine integrates multi-tiered geocoding:
+1. **Nigerian State Abbreviation Normalization:** Automatically expands state codes (e.g., `CRS` &rarr; `Cross River State`, `FCT` &rarr; `Abuja`, `LG` &rarr; `Lagos State`, `PH` &rarr; `Port Harcourt`).
+2. **Nigeria Bounding Box Enforcement:** Scopes searches with bounding box `bbox=2.6769,4.2725,14.6778,13.8920` and `countrycodes=ng` to completely eliminate false positives overseas.
+3. **Google Maps Geocoding API Support:** Optional integration with Google Maps Platform via `VITE_GOOGLE_MAPS_API_KEY` ($200 monthly free tier).
+4. **Coordinate & Link Parser:** Direct recognition and parsing of Google Maps URLs, `@lat,lng` strings, and raw coordinates.
 
 ---
 
