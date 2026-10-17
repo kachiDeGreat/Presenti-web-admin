@@ -42,7 +42,7 @@ export const BeaconSettingsPage: React.FC = () => {
   );
 
   const initialMode: "HYBRID" | "GEOFENCE_ONLY" =
-    church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" ? "GEOFENCE_ONLY" : "HYBRID";
+    church?.beaconConfig?.verificationMode === "HYBRID" ? "HYBRID" : "GEOFENCE_ONLY";
 
   // Anchors state with synchronous defaults from church
   const [ssidHint, setSsidHint] = useState<string>(() => (isInitiallyCalibrated ? church?.beaconConfig?.ssidHint || "" : ""));
@@ -1072,7 +1072,46 @@ export const BeaconSettingsPage: React.FC = () => {
               </div>
 
               <div className={styles.modeCardsGrid}>
-                {/* Option 1: Office Router (Hybrid Mode) */}
+                {/* Option 1: Geofence Only (Default & Recommended) */}
+                <div
+                  className={`${styles.modeOptionCard} ${selectedMode === "GEOFENCE_ONLY" ? styles.modeOptionCardSelected : ""}`}
+                  onClick={() => handleSelectModeAndShowQr("GEOFENCE_ONLY")}
+                >
+                  <div className={styles.modeCardTopRow}>
+                    <div className={`${styles.modeCardIcon} ${styles.iconGeo}`}>
+                      <MapPin size={24} />
+                    </div>
+                    <span className={`${styles.modeCardBadge} ${styles.badgeHybrid}`}>
+                      Recommended · Instant Setup
+                    </span>
+                  </div>
+                  <div className={styles.modeCardBody}>
+                    <h4>Satellite GPS Geofence (Router-Free)</h4>
+                    <p>
+                      Pure Satellite Presence Verification. Ideal for workforces, field teams, and offices operating on mobile data or shared hotspots.
+                    </p>
+                    <div className={styles.modeCardFeatureList}>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Zero physical router hardware needed
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Uses smartphone satellite GPS chip
+                      </div>
+                      <div className={styles.modeCardFeatureItem}>
+                        <Check size={14} /> Instant sub-second attendance verification
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.modeSelectBtn} ${styles.modeSelectBtnPrimary}`}
+                  >
+                    <span>Use Satellite GPS Geofence</span>
+                    <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
+                  </button>
+                </div>
+
+                {/* Option 2: Office Router (Hybrid Mode) */}
                 <div
                   className={`${styles.modeOptionCard} ${selectedMode === "HYBRID" ? styles.modeOptionCardSelected : ""}`}
                   onClick={() => {
@@ -1084,21 +1123,21 @@ export const BeaconSettingsPage: React.FC = () => {
                     <div className={`${styles.modeCardIcon} ${styles.iconWifi}`}>
                       <Wifi size={24} />
                     </div>
-                    <span className={`${styles.modeCardBadge} ${styles.badgeHybrid}`}>
-                      Recommended
+                    <span className={`${styles.modeCardBadge} ${styles.badgeGeofence}`}>
+                      Optional · Dual-Tier
                     </span>
                   </div>
                   <div className={styles.modeCardBody}>
                     <h4>Physical Office Wi-Fi Router</h4>
                     <p>
-                      Dual-Tier Hybrid Security. Smartphones detect your router's hardware MAC address (BSSID) from the air waves, backed by GPS geofencing.
+                      Dual-Tier Hybrid Security. Smartphones detect your router's hardware MAC address (BSSID) from surrounding airwaves, backed by GPS geofencing.
                     </p>
                     <div className={styles.modeCardFeatureList}>
                       <div className={styles.modeCardFeatureItem}>
                         <Check size={14} /> Maximum anti-spoofing security
                       </div>
                       <div className={styles.modeCardFeatureItem}>
-                        <Check size={14} /> Instant sub-second check-in for workforce
+                        <Check size={14} /> Requires on-site office router
                       </div>
                       <div className={styles.modeCardFeatureItem}>
                         <Check size={14} /> Automatic GPS fail-safe fallback
@@ -1107,48 +1146,9 @@ export const BeaconSettingsPage: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    className={`${styles.modeSelectBtn} ${styles.modeSelectBtnPrimary}`}
-                  >
-                    <span>Use Office Router</span>
-                    <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
-                  </button>
-                </div>
-
-                {/* Option 2: Geofence Only */}
-                <div
-                  className={`${styles.modeOptionCard} ${selectedMode === "GEOFENCE_ONLY" ? styles.modeOptionCardSelected : ""}`}
-                  onClick={() => handleSelectModeAndShowQr("GEOFENCE_ONLY")}
-                >
-                  <div className={styles.modeCardTopRow}>
-                    <div className={`${styles.modeCardIcon} ${styles.iconGeo}`}>
-                      <MapPin size={24} />
-                    </div>
-                    <span className={`${styles.modeCardBadge} ${styles.badgeGeofence}`}>
-                      Router-Free
-                    </span>
-                  </div>
-                  <div className={styles.modeCardBody}>
-                    <h4>No Physical Router (GPS Only)</h4>
-                    <p>
-                      Pure Satellite Geofence. Perfect for mobile teams, field workers, pop-up events, or workspaces operating on cellular hotspots.
-                    </p>
-                    <div className={styles.modeCardFeatureList}>
-                      <div className={styles.modeCardFeatureItem}>
-                        <Check size={14} /> Zero router hardware required
-                      </div>
-                      <div className={styles.modeCardFeatureItem}>
-                        <Check size={14} /> Uses phone satellite GPS chip
-                      </div>
-                      <div className={styles.modeCardFeatureItem}>
-                        <Check size={14} /> Fast, lightweight attendance verification
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
                     className={`${styles.modeSelectBtn} ${styles.modeSelectBtnSecondary}`}
                   >
-                    <span>Use GPS Geofence Only</span>
+                    <span>Use Office Router (Router + GPS)</span>
                     <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
                   </button>
                 </div>
