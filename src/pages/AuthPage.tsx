@@ -9,7 +9,8 @@ export const AuthPage: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  const { user, church, loading, signInWithGoogle, signInWithGoogleRedirect } = useAuth();
+  const { user, church, loading, signInWithGoogle, signInWithGoogleRedirect } =
+    useAuth();
   const navigate = useNavigate();
 
   // Active Session Guard: Auto-redirect if user already has an active authenticated session
@@ -178,7 +179,7 @@ export const AuthPage: React.FC = () => {
             </button>
 
             {/* Direct Redirect Fallback for browsers that block or freeze popups */}
-            <div style={{ marginTop: "1rem", textAlign: "center" }}>
+            {/* <div style={{ marginTop: "1rem", textAlign: "center" }}>
               <button
                 type="button"
                 onClick={handleGoogleRedirectSignIn}
@@ -196,7 +197,7 @@ export const AuthPage: React.FC = () => {
               >
                 Popup blank or blocked? Click here to Sign In with Direct Page Redirect &rarr;
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Verification & Architecture Card */}
