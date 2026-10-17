@@ -155,6 +155,29 @@ const WEEK_DAYS = [
   { id: 6, name: "Sat", label: "Saturday" },
 ];
 
+/**
+ * Generates a completely randomized, unique organization code in XX-XXX-XXX format.
+ * Structure:
+ * - 2 random uppercase letters (A-Z)
+ * - 3 random uppercase letters (A-Z)
+ * - 3 random digits (100–999)
+ * Example: "KW-RTX-482"
+ * Completely decoupled from organization name and location to prevent stale initials or collisions.
+ */
+export const generateRandomOrgCode = (): string => {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let part1 = "";
+  for (let i = 0; i < 2; i++) {
+    part1 += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  let part2 = "";
+  for (let i = 0; i < 3; i++) {
+    part2 += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  const part3 = Math.floor(100 + Math.random() * 900); // exactly 3 digits
+  return `${part1}-${part2}-${part3}`;
+};
+
 export const OnboardingPage: React.FC = () => {
   const { user, church, loading, createChurchWorkspace } = useAuth();
   const navigate = useNavigate();
@@ -172,7 +195,7 @@ export const OnboardingPage: React.FC = () => {
   // Step 1: Church Identity & Administrator Information
   const [churchName, setChurchName] = useState("");
   const [branchName, setBranchName] = useState("");
-  const [churchCode, setChurchCode] = useState("");
+  const [churchCode, setChurchCode] = useState<string>(() => generateRandomOrgCode());
   const [adminName, setAdminName] = useState(user?.displayName || "");
   const [adminPhone, setAdminPhone] = useState("");
 
@@ -217,48 +240,8 @@ export const OnboardingPage: React.FC = () => {
   const adminNameValidation = adminName ? validatePersonName(adminName) : { isValid: true, error: null };
   const phoneValidation = adminPhone ? validatePhoneNumber(adminPhone) : { isValid: true, error: null };
 
-  // Helper to generate dynamic, unique organization code (XX-XXX-XXX format)
-  const generateUniqueChurchCode = (
-    org: string,
-    cityVal?: string,
-    stateVal?: string,
-  ): string => {
-    const cleanOrg = org.trim().replace(/[^a-zA-Z0-9\s]/g, "");
-    let prefix = "ORG";
-    if (cleanOrg) {
-      const words = cleanOrg.split(/\s+/).filter(Boolean);
-      if (words.length >= 2) {
-        prefix = (words[0][0] + words[1][0]).toUpperCase();
-      } else if (words.length === 1) {
-        prefix = words[0].slice(0, 2).toUpperCase();
-      }
-    }
-    if (prefix.length < 2) {
-      prefix = (prefix + "X").slice(0, 2);
-    }
-
-    let locStr = (cityVal || stateVal || "").trim().replace(/[^a-zA-Z0-9\s]/g, "");
-    let middle = "HQ0";
-    if (locStr) {
-      const locWords = locStr.split(/\s+/).filter(Boolean);
-      if (locWords.length >= 3) {
-        middle = locWords.slice(0, 3).map((w) => w[0].toUpperCase()).join("");
-      } else if (locWords.length === 2) {
-        middle = (locWords[0].slice(0, 2) + locWords[1][0]).toUpperCase();
-      } else if (locWords.length === 1) {
-        middle = locWords[0].slice(0, 3).toUpperCase();
-      }
-    }
-    if (middle.length < 3) {
-      middle = (middle + "HQ").slice(0, 3);
-    }
-
-    const randomPin = Math.floor(100 + Math.random() * 900);
-    return `${prefix}-${middle}-${randomPin}`;
-  };
-
   const handleRegenerateCode = () => {
-    const code = generateUniqueChurchCode(churchName, city, state);
+    const code = generateRandomOrgCode();
     setChurchCode(code);
     toast.info(`Generated new unique organization code: ${code}`);
   };
@@ -272,8 +255,8 @@ export const OnboardingPage: React.FC = () => {
   // Handlers for organization name and location fields
   const handleChurchNameChange = (val: string) => {
     setChurchName(val);
-    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
-      setChurchCode(generateUniqueChurchCode(val, city, state));
+    if (!churchCode) {
+      setChurchCode(generateRandomOrgCode());
     }
   };
 
@@ -287,10 +270,6 @@ export const OnboardingPage: React.FC = () => {
       .filter(Boolean)
       .join(", ");
     setBranchName(fullBranch);
-
-    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
-      setChurchCode(generateUniqueChurchCode(churchName, city, newState));
-    }
   };
 
   const handleStateChange = (newState: string) => {
@@ -299,12 +278,6 @@ export const OnboardingPage: React.FC = () => {
       .filter(Boolean)
       .join(", ");
     setBranchName(fullBranch);
-
-
-
-    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
-      setChurchCode(generateUniqueChurchCode(churchName, city, newState));
-    }
   };
 
   const handleCityChange = (newCity: string) => {
@@ -313,10 +286,6 @@ export const OnboardingPage: React.FC = () => {
       .filter(Boolean)
       .join(", ");
     setBranchName(fullBranch);
-
-    if (!churchCode || churchCode.startsWith("ORG-") || churchCode.includes("-HQ")) {
-      setChurchCode(generateUniqueChurchCode(churchName, newCity, state));
-    }
   };
 
   const handleAddPresetDept = (dept: string) => {
@@ -751,7 +720,7 @@ export const OnboardingPage: React.FC = () => {
                       id="churchCode"
                       type="text"
                       className={`mono ${!codeValidation.isValid ? styles.inputError : ""}`}
-                      placeholder="e.g. AC-LAG-482"
+                      placeholder="e.g. KW-RTX-482"
                       value={churchCode}
                       onChange={(e) =>
                         setChurchCode(e.target.value.toUpperCase())
