@@ -54,7 +54,7 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 - **CSV & Excel Export:** One-click data exports for payroll processing and institutional reporting.
 
 ### 6. Workforce & Device Binding Management
-- **Organization Pairing Codes:** Automated format (`XX-XXX-XXX`, e.g., `TO-CRR-656`) for streamlined employee onboarding.
+- **Randomized Organization Pairing Codes:** High-entropy format (`XX-XXX-XXX`, e.g., `KW-RTX-482`) completely decoupled from location names to eliminate stale initials when changing state or premises.
 - **Hardware Device Lock:** Cryptographically links each employee's account to their registered smartphone hardware identifier.
 - **Administrative Device Reset:** Allows administrators to unbind or transfer devices when an employee replaces their smartphone.
 
