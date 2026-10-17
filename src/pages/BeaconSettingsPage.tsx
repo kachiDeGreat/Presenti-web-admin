@@ -58,6 +58,7 @@ export const BeaconSettingsPage: React.FC = () => {
     isInitiallyCalibrated ? "OVERVIEW" : "QR_STATION",
   );
   const [isDataMounted, setIsDataMounted] = useState<boolean>(false);
+  const hasInitializedViewRef = useRef<boolean>(false);
 
   // Session notification tracking refs to prevent duplicate toasts and revisit toasts
   const lastAnnouncedSessionRef = useRef<{
@@ -235,10 +236,13 @@ export const BeaconSettingsPage: React.FC = () => {
       setRadiusMeters(savedRadius);
       setPinnedLocationName(savedLabel);
 
-      if (church.beaconConfig?.verificationMode) {
-        setSelectedMode(church.beaconConfig.verificationMode);
+      if (!hasInitializedViewRef.current) {
+        if (church.beaconConfig?.verificationMode) {
+          setSelectedMode(church.beaconConfig.verificationMode);
+        }
+        setViewMode(isExplicitlyCalibrated ? "OVERVIEW" : "QR_STATION");
+        hasInitializedViewRef.current = true;
       }
-      setViewMode(isExplicitlyCalibrated ? "OVERVIEW" : "QR_STATION");
       setIsDataMounted(true);
     }
   }, [church]);
@@ -399,25 +403,19 @@ export const BeaconSettingsPage: React.FC = () => {
     return () => unsubscribe();
   }, [church?.id]);
 
-  // Start or restart QR calibration session with intelligent architecture routing
+  // Start or restart QR calibration session
   const handleStartQrSession = async (overrideMode?: "HYBRID" | "GEOFENCE_ONLY") => {
-    const isGeofence =
-      church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY" ||
-      (selectedMode === "GEOFENCE_ONLY" && !targetBssid);
-
-    const effectiveMode: "HYBRID" | "GEOFENCE_ONLY" =
-      overrideMode || (isGeofence ? "GEOFENCE_ONLY" : "HYBRID");
-
-    setSelectedMode(effectiveMode);
     setViewMode("QR_STATION");
 
-    // Automatically push to respective workflow:
-    // - Geofence-Only -> Directly display Geofence QR code
-    // - Office Router -> Display Router prerequisite checklist
-    if (effectiveMode === "GEOFENCE_ONLY") {
-      setSetupStep("SHOW_QR");
+    if (overrideMode) {
+      setSelectedMode(overrideMode);
+      if (overrideMode === "GEOFENCE_ONLY") {
+        setSetupStep("SHOW_QR");
+      } else {
+        setSetupStep("ROUTER_PREREQUISITE");
+      }
     } else {
-      setSetupStep("ROUTER_PREREQUISITE");
+      setSetupStep("CHOOSE_MODE");
     }
 
     setCalibrationSession({ status: "AWAITING_SCAN" });
@@ -427,17 +425,18 @@ export const BeaconSettingsPage: React.FC = () => {
       try {
         const churchRef = doc(db, "churches", church.id);
         const sessionRef = doc(db, "churches", church.id, "calibration", "session");
+        const sessionMode = overrideMode || selectedMode;
         await Promise.all([
           updateDoc(churchRef, {
             "calibrationSession.status": "AWAITING_SCAN",
-            "calibrationSession.mode": effectiveMode,
+            "calibrationSession.mode": sessionMode,
             "calibrationSession.startedAt": new Date().toISOString(),
           }).catch(() => {}),
           setDoc(
             sessionRef,
             {
               status: "AWAITING_SCAN",
-              mode: effectiveMode,
+              mode: sessionMode,
               startedAt: new Date().toISOString(),
             },
             { merge: true },
@@ -1197,23 +1196,13 @@ export const BeaconSettingsPage: React.FC = () => {
                 </div>
 
                 <div className={styles.prerequisiteActions}>
-                  {isExplicitlyCalibrated ? (
-                    <button
-                      type="button"
-                      className={styles.backStepBtn}
-                      onClick={() => setViewMode("OVERVIEW")}
-                    >
-                      ← Cancel &amp; Back to Active Anchors
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className={styles.backStepBtn}
-                      onClick={() => setSetupStep("CHOOSE_MODE")}
-                    >
-                      ← Back to Architecture Options
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={styles.backStepBtn}
+                    onClick={() => setSetupStep("CHOOSE_MODE")}
+                  >
+                    ← Back to Architecture Options
+                  </button>
                   <button
                     type="button"
                     className={styles.proceedStepBtn}
