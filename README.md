@@ -21,12 +21,13 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 ## Core Capabilities & Features
 
 ### 1. Dual Physical Verification Architecture
-- **Option 1 — Hybrid (Physical Office Wi-Fi Router + GPS Geofence):**
-  - **Primary Gateway:** Smartphones scan the physical router MAC address (BSSID) from surrounding airwaves. Prevents workers from spoofing network names or using personal mobile hotspots.
-  - **Automatic GPS Failover:** Seamlessly falls back to GPS perimeter verification if the physical router is temporarily unreachable.
-- **Option 2 — Router-Free (Satellite GPS Geofence Only):**
-  - Designed for mobile teams, field workers, pop-up events, and workspaces without dedicated routers.
-  - Workers verify presence against a customizable satellite GPS perimeter (10m to 100m radius).
+- **Option 1 — Satellite GPS Geofence (Router-Free · Default & Recommended):**
+  - **Instant Setup:** Calibrates using high-precision satellite GPS coordinates and customizable perimeter radii (10m to 100m).
+  - **Zero Hardware Overhead:** Ideal for modern offices, field operations, pop-up events, and mobile workspaces without needing dedicated routers.
+  - **High-Velocity Clock-In:** Zero radio scan waiting period; instant sub-second verification.
+- **Option 2 — Physical Office Wi-Fi Router (Hybrid · Optional Dual-Tier):**
+  - **Tier 1 — Hardware Wi-Fi Anchor (BSSID):** Verifies the physical router MAC address (BSSID) from surrounding airwaves, preventing workers from spoofing network names or using personal mobile hotspots.
+  - **Tier 2 — Automatic GPS Failover:** Seamlessly falls back to GPS perimeter verification if the physical router radio is temporarily unreachable.
 
 ### 2. QR Mobile Calibration Station
 - **Real-Time Handshake Bridge:** Generates encrypted, short-lived QR codes for instant pairing with the administrator's smartphone.
@@ -45,7 +46,7 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 ### 4. Real-Time Dashboard & Live Attendance Stream
 - **Live Attendance Metrics:** Real-time counts for Present, Late, and Absent workers with live velocity indicators.
 - **Dynamic Attendance Stream:** Sub-second Firestore snapshot stream displaying clock-ins the millisecond workers punch in.
-- **Audit Trail:** Traps arrival timestamps, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), and device hardware signatures.
+- **Audit Trail & Identity Verification:** Traps arrival timestamps, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), native biometric identity verification (`BIOMETRIC` vs. `DEVICE_PASSCODE`), and device hardware signatures.
 
 ### 5. Monthly Audit Matrix & Export Engine
 - **Scheduled Day Aggregation:** Automatically groups workforce attendance across designated meeting and service days (e.g. Sundays, Wednesdays, weekdays).
