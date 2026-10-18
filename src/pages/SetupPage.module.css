@@ -427,3 +427,195 @@
   transform: translateX(20px);
 }
 
+/* Schedule Mode Segmented Control */
+.scheduleModeSegment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+
+.scheduleModeBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 150ms ease;
+}
+
+.scheduleModeBtn:hover {
+  border-color: #CBD5E1;
+}
+
+.scheduleModeBtnActive {
+  background-color: #EFF6FF;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.scheduleModeBtnTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scheduleModeBtnActive .scheduleModeBtnTitle {
+  color: #1D4ED8;
+}
+
+.scheduleModeBtnDesc {
+  font-size: 0.775rem;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+/* Day-Specific Tab Selector */
+.dayTabsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+
+.dayTabBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.dayTabBtn:hover {
+  border-color: #94A3B8;
+  background-color: #F8FAFC;
+}
+
+.dayTabBtnActive {
+  background-color: #0F2042;
+  border-color: #0F2042;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 32, 66, 0.2);
+}
+
+.dayTabHoursBadge {
+  font-size: 0.7rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: #F1F5F9;
+  color: #475569;
+  font-weight: 700;
+}
+
+.dayTabBtnActive .dayTabHoursBadge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* Day Editor Container */
+.dayEditorBox {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dayEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.dayEditorTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dayEditorSub {
+  font-size: 0.775rem;
+  color: #64748B;
+  font-weight: 400;
+}
+
+.copyAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.copyAllBtn:hover {
+  background-color: #DBEAFE;
+}
+
+/* Per-Day Mini Overview Grid */
+.dayOverviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dayOverviewCard {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dayOverviewDayName {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.dayOverviewTime {
+  font-size: 0.75rem;
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.dayOverviewDetails {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+

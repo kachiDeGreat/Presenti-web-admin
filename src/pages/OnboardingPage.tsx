@@ -18,11 +18,15 @@ import {
   MapPin,
   Globe,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
+import type { DaySchedule } from "../types";
 import {
   validateAttendanceWindow,
+  validateDaySchedules,
+  format12Hour,
   formatDurationMinutes,
   validateOrgName,
   validateBranchName,
@@ -222,13 +226,60 @@ export const OnboardingPage: React.FC = () => {
 
   // Step 3: Service Schedule & Arrival Policy
   const [serviceDays, setServiceDays] = useState<number[]>([1, 2, 3, 4, 5]); // Weekdays default
+  const [scheduleMode, setScheduleMode] = useState<"UNIFIED" | "PER_DAY">("UNIFIED");
   const [arrivalCutoff, setArrivalCutoff] = useState("07:00");
   const [lateTolerance, setLateTolerance] = useState("07:30");
   const [allowLateSignIn, setAllowLateSignIn] = useState(true);
   const [enableSignOut, setEnableSignOut] = useState(false);
   const [signOutTime, setSignOutTime] = useState("17:00");
+  const [daySchedules, setDaySchedules] = useState<Record<number, DaySchedule>>({});
+  const [activeScheduleDay, setActiveScheduleDay] = useState<number>(1);
 
-  // Real-time regex and attendance window order validation
+  // Helper getters and mutators for day-specific schedules
+  const getActiveDaySchedule = (dayId: number): DaySchedule => {
+    if (daySchedules[dayId]) {
+      return daySchedules[dayId];
+    }
+    return {
+      arrivalCutoff,
+      lateTolerance,
+      allowLateSignIn,
+      enableSignOut,
+      signOutTime,
+    };
+  };
+
+  const updateDaySchedule = (dayId: number, patch: Partial<DaySchedule>) => {
+    setDaySchedules((prev) => {
+      const current = prev[dayId] || {
+        arrivalCutoff,
+        lateTolerance,
+        allowLateSignIn,
+        enableSignOut,
+        signOutTime,
+      };
+      return {
+        ...prev,
+        [dayId]: {
+          ...current,
+          ...patch,
+        },
+      };
+    });
+  };
+
+  const copyActiveDayToAll = () => {
+    const activeSched = getActiveDaySchedule(activeScheduleDay);
+    const updated: Record<number, DaySchedule> = {};
+    serviceDays.forEach((d) => {
+      updated[d] = { ...activeSched };
+    });
+    setDaySchedules(updated);
+    const activeName = WEEK_DAYS.find((w) => w.id === activeScheduleDay)?.label || "Selected day";
+    toast.success(`Applied ${activeName}'s schedule to all ${serviceDays.length} selected days.`);
+  };
+
+  // Real-time regex and attendance window order validation for unified mode
   const timeValidation = validateAttendanceWindow(
     arrivalCutoff,
     lateTolerance,
@@ -329,9 +380,15 @@ export const OnboardingPage: React.FC = () => {
         toast.warn("At least one service day is required.");
         return;
       }
-      setServiceDays(serviceDays.filter((d) => d !== dayId));
+      const nextDays = serviceDays.filter((d) => d !== dayId);
+      setServiceDays(nextDays);
+      if (activeScheduleDay === dayId && nextDays.length > 0) {
+        setActiveScheduleDay(nextDays[0]);
+      }
     } else {
-      setServiceDays([...serviceDays, dayId].sort());
+      const nextDays = [...serviceDays, dayId].sort();
+      setServiceDays(nextDays);
+      setActiveScheduleDay(dayId);
     }
   };
 
@@ -386,24 +443,39 @@ export const OnboardingPage: React.FC = () => {
         toast.error("Please select at least one active service day.");
         return false;
       }
-      if (!timeValidation.isOpenValidFormat) {
-        toast.error("Sign-In Window Open Time must be in valid HH:mm format.");
-        return false;
-      }
-      if (!timeValidation.isCloseValidFormat) {
-        toast.error("Sign-In Window Close Time must be in valid HH:mm format.");
-        return false;
-      }
-      if (!timeValidation.isSyncValidFormat) {
-        toast.error("Daily Cloud Sync Cutoff must be in valid HH:mm format.");
-        return false;
-      }
-      if (!timeValidation.isOrderValid) {
-        toast.error(
-          timeValidation.errorMessage ||
-            "The Sign-In Window Close Time must be later than the Sign-In Window Open Time.",
-        );
-        return false;
+      if (scheduleMode === "UNIFIED") {
+        if (!timeValidation.isOpenValidFormat) {
+          toast.error("Sign-In Window Open Time must be in valid HH:mm format.");
+          return false;
+        }
+        if (!timeValidation.isCloseValidFormat) {
+          toast.error("Sign-In Window Close Time must be in valid HH:mm format.");
+          return false;
+        }
+        if (!timeValidation.isOrderValid) {
+          toast.error(
+            timeValidation.errorMessage ||
+              "The Sign-In Window Close Time must be later than the Sign-In Window Open Time.",
+          );
+          return false;
+        }
+        if (enableSignOut && !timeValidation.isSignOutValidFormat) {
+          toast.error("Sign-Out Time must be in valid HH:mm format (e.g. 17:00).");
+          return false;
+        }
+      } else {
+        const defaultSched: DaySchedule = {
+          arrivalCutoff,
+          lateTolerance,
+          allowLateSignIn,
+          enableSignOut,
+          signOutTime,
+        };
+        const perDayVal = validateDaySchedules(serviceDays, daySchedules, defaultSched);
+        if (!perDayVal.isValid) {
+          toast.error(perDayVal.firstError || "Please correct day-specific schedule times.");
+          return false;
+        }
       }
     }
     return true;
@@ -421,12 +493,28 @@ export const OnboardingPage: React.FC = () => {
 
   const handleFinalSubmit = async () => {
     if (!validateStep(3)) return;
-    if (!timeValidation.isValid) {
-      toast.error(
-        timeValidation.errorMessage ||
-          "Please correct the sign-in window times.",
-      );
-      return;
+
+    if (scheduleMode === "UNIFIED") {
+      if (!timeValidation.isValid) {
+        toast.error(
+          timeValidation.errorMessage ||
+            "Please correct the sign-in window times.",
+        );
+        return;
+      }
+    } else {
+      const defaultSched: DaySchedule = {
+        arrivalCutoff,
+        lateTolerance,
+        allowLateSignIn,
+        enableSignOut,
+        signOutTime,
+      };
+      const perDayVal = validateDaySchedules(serviceDays, daySchedules, defaultSched);
+      if (!perDayVal.isValid) {
+        toast.error(perDayVal.firstError || "Please correct day-specific schedule times.");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -453,11 +541,13 @@ export const OnboardingPage: React.FC = () => {
         isCalibrated: false,
         policySettings: {
           serviceDays,
+          scheduleMode,
           arrivalCutoff,
           lateTolerance,
           allowLateSignIn,
           enableSignOut,
           signOutTime: enableSignOut ? signOutTime : undefined,
+          daySchedules: scheduleMode === "PER_DAY" ? daySchedules : undefined,
         },
       });
 
@@ -959,206 +1049,555 @@ export const OnboardingPage: React.FC = () => {
               </div>
             </div>
 
-            <div className={styles.inputsGrid}>
-              <div className={styles.fieldGroup}>
-                <label htmlFor="arrivalCutoff">
-                  Sign-In Window Open Time *
-                </label>
-                <input
-                  id="arrivalCutoff"
-                  type="time"
-                  value={arrivalCutoff}
-                  onChange={(e) => setArrivalCutoff(e.target.value)}
-                  className={
-                    !timeValidation.isOpenValidFormat ||
-                    !timeValidation.isOrderValid
-                      ? styles.inputError
-                      : ""
-                  }
-                  required
-                />
-                {!timeValidation.isOpenValidFormat ? (
-                  <span className={styles.fieldErrorText}>
-                    <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:00
-                    AM)
-                  </span>
-                ) : !timeValidation.isOrderValid ? (
-                  <span className={styles.fieldErrorText}>
-                    <AlertCircle size={12} /> Open time must be earlier than
-                    close time ({timeValidation.formattedClose})
-                  </span>
-                ) : (
-                  <span className={styles.fieldHint}>
-                    When check-in timer starts and becomes active on the mobile
-                    app ({timeValidation.formattedOpen}).
-                  </span>
-                )}
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <label htmlFor="lateTolerance">
-                  Sign-In Window Close Time *
-                </label>
-                <input
-                  id="lateTolerance"
-                  type="time"
-                  value={lateTolerance}
-                  onChange={(e) => setLateTolerance(e.target.value)}
-                  className={
-                    !timeValidation.isCloseValidFormat ||
-                    !timeValidation.isOrderValid
-                      ? styles.inputError
-                      : ""
-                  }
-                  required
-                />
-                {!timeValidation.isCloseValidFormat ? (
-                  <span className={styles.fieldErrorText}>
-                    <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:30
-                    AM)
-                  </span>
-                ) : !timeValidation.isOrderValid ? (
-                  <span className={styles.fieldErrorText}>
-                    <AlertCircle size={12} /> Close time must be later than open
-                    time ({timeValidation.formattedOpen})
-                  </span>
-                ) : (
-                  <span className={styles.fieldHint}>
-                    {allowLateSignIn
-                      ? `Official arrival deadline (${timeValidation.formattedClose}). Check-ins after this time will carry a LATE tag.`
-                      : `Strict check-in cutoff (${timeValidation.formattedClose}). Check-ins stop and app locks immediately.`}
-                  </span>
-                )}
+            {/* Schedule Mode Selector */}
+            <div className={styles.fieldGroup}>
+              <label>Schedule Mode</label>
+              <span className={styles.fieldHint}>
+                Choose whether all selected operating days share identical call-up hours or have customized times per day.
+              </span>
+              <div className={styles.scheduleModeSegment}>
+                <button
+                  type="button"
+                  className={`${styles.scheduleModeBtn} ${scheduleMode === "UNIFIED" ? styles.scheduleModeBtnActive : ""}`}
+                  onClick={() => setScheduleMode("UNIFIED")}
+                >
+                  <div className={styles.scheduleModeBtnTitle}>
+                    <Clock size={16} />
+                    <span>One Time for All Days</span>
+                  </div>
+                  <div className={styles.scheduleModeBtnDesc}>
+                    Use a single unified check-in, late tolerance, and sign-out window across all active days.
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.scheduleModeBtn} ${scheduleMode === "PER_DAY" ? styles.scheduleModeBtnActive : ""}`}
+                  onClick={() => {
+                    setScheduleMode("PER_DAY");
+                    if (serviceDays.length > 0 && !serviceDays.includes(activeScheduleDay)) {
+                      setActiveScheduleDay(serviceDays[0]);
+                    }
+                  }}
+                >
+                  <div className={styles.scheduleModeBtnTitle}>
+                    <Calendar size={16} />
+                    <span>Different Times per Day</span>
+                  </div>
+                  <div className={styles.scheduleModeBtnDesc}>
+                    Customize individual check-in cutoff, late tolerance, and sign-out hours for each operating day.
+                  </div>
+                </button>
               </div>
             </div>
 
-            {/* Policy Toggles */}
-            <div className={styles.policyTogglesList}>
-              {/* Toggle 1: Allow Late Sign-In */}
-              <div
-                className={`${styles.toggleCard} ${allowLateSignIn ? styles.toggleCardActive : ""}`}
-                onClick={() => setAllowLateSignIn(!allowLateSignIn)}
-                role="button"
-                tabIndex={0}
-              >
-                <div className={styles.toggleCardInfo}>
-                  <div className={styles.toggleCardTitle}>
-                    <span>Allow Late Sign-In</span>
-                    <span
-                      className={`${styles.toggleTag} ${allowLateSignIn ? styles.tagAmber : styles.tagSlate}`}
-                    >
-                      {allowLateSignIn ? "Late Tagging Active" : "Strict Lockout"}
-                    </span>
-                  </div>
-                  <div className={styles.toggleCardDesc}>
-                    {allowLateSignIn
-                      ? `Workers arriving after ${timeValidation.formattedClose} can still clock in, but their record will be explicitly tagged as LATE in audit records.`
-                      : `Attendance strictly locks at ${timeValidation.formattedClose}. No sign-ins allowed once the window closes.`}
-                  </div>
-                </div>
-                <div
-                  className={`${styles.toggleSwitch} ${allowLateSignIn ? styles.toggleSwitchChecked : ""}`}
-                >
-                  <div className={styles.toggleThumb} />
-                </div>
-              </div>
-
-              {/* Toggle 2: Enable Sign-Out */}
-              <div
-                className={`${styles.toggleCard} ${enableSignOut ? styles.toggleCardActive : ""}`}
-                onClick={() => setEnableSignOut(!enableSignOut)}
-                role="button"
-                tabIndex={0}
-              >
-                <div className={styles.toggleCardInfo}>
-                  <div className={styles.toggleCardTitle}>
-                    <span>Enable Worker Sign-Out</span>
-                    <span
-                      className={`${styles.toggleTag} ${enableSignOut ? styles.tagBlue : styles.tagSlate}`}
-                    >
-                      {enableSignOut ? "Sign-Out Enabled" : "Check-In Only"}
-                    </span>
-                  </div>
-                  <div className={styles.toggleCardDesc}>
-                    {enableSignOut
-                      ? "Workers are required or permitted to sign out at the end of their shift."
-                      : "Workers only sign in once. Sign-out is disabled."}
-                  </div>
-                </div>
-                <div
-                  className={`${styles.toggleSwitch} ${enableSignOut ? styles.toggleSwitchChecked : ""}`}
-                >
-                  <div className={styles.toggleThumb} />
-                </div>
-              </div>
-
-              {/* Conditional Sign-Out Time Input */}
-              {enableSignOut && (
-                <div
-                  style={{
-                    backgroundColor: "#EFF6FF",
-                    border: "1.5px solid #BFDBFE",
-                    borderRadius: 12,
-                    padding: 16,
-                    marginTop: 4,
-                  }}
-                >
+            {/* Mode 1: Unified Schedule */}
+            {scheduleMode === "UNIFIED" && (
+              <>
+                <div className={styles.inputsGrid}>
                   <div className={styles.fieldGroup}>
-                    <label htmlFor="signOutTime" style={{ color: "#1E3A8A" }}>
-                      Sign-Out Earliest Time *
+                    <label htmlFor="arrivalCutoff">
+                      Sign-In Window Open Time *
                     </label>
                     <input
-                      id="signOutTime"
+                      id="arrivalCutoff"
                       type="time"
-                      value={signOutTime}
-                      onChange={(e) => setSignOutTime(e.target.value)}
+                      value={arrivalCutoff}
+                      onChange={(e) => setArrivalCutoff(e.target.value)}
                       className={
-                        !timeValidation.isSignOutValidFormat
+                        !timeValidation.isOpenValidFormat ||
+                        !timeValidation.isOrderValid
                           ? styles.inputError
                           : ""
                       }
                       required
                     />
-                    {!timeValidation.isSignOutValidFormat ? (
+                    {!timeValidation.isOpenValidFormat ? (
                       <span className={styles.fieldErrorText}>
-                        <AlertCircle size={12} /> Format must be HH:mm (e.g.
-                        05:00 PM)
+                        <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:00 AM)
+                      </span>
+                    ) : !timeValidation.isOrderValid ? (
+                      <span className={styles.fieldErrorText}>
+                        <AlertCircle size={12} /> Open time must be earlier than close time ({timeValidation.formattedClose})
                       </span>
                     ) : (
-                      <span className={styles.fieldHint} style={{ color: "#3B82F6" }}>
-                        Earliest time workers can sign out (
-                        {timeValidation.formattedSignOut || "05:00 PM"}). Workers
-                        can sign out anytime from this time onwards — there is no
-                        close cutoff.
+                      <span className={styles.fieldHint}>
+                        When check-in timer starts and becomes active on the mobile app ({timeValidation.formattedOpen}).
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={styles.fieldGroup}>
+                    <label htmlFor="lateTolerance">
+                      Sign-In Window Close Time *
+                    </label>
+                    <input
+                      id="lateTolerance"
+                      type="time"
+                      value={lateTolerance}
+                      onChange={(e) => setLateTolerance(e.target.value)}
+                      className={
+                        !timeValidation.isCloseValidFormat ||
+                        !timeValidation.isOrderValid
+                          ? styles.inputError
+                          : ""
+                      }
+                      required
+                    />
+                    {!timeValidation.isCloseValidFormat ? (
+                      <span className={styles.fieldErrorText}>
+                        <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:30 AM)
+                      </span>
+                    ) : !timeValidation.isOrderValid ? (
+                      <span className={styles.fieldErrorText}>
+                        <AlertCircle size={12} /> Close time must be later than open time ({timeValidation.formattedOpen})
+                      </span>
+                    ) : (
+                      <span className={styles.fieldHint}>
+                        {allowLateSignIn
+                          ? `Official arrival deadline (${timeValidation.formattedClose}). Check-ins after this time will carry a LATE tag.`
+                          : `Strict check-in cutoff (${timeValidation.formattedClose}). Check-ins stop and app locks immediately.`}
                       </span>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Immediate Real-Time Validation Alert Prompt */}
-            {!timeValidation.isValid ? (
-              <div className={styles.timeAlertError} role="alert">
-                <AlertTriangle size={18} className={styles.timeAlertIcon} />
-                <div className={styles.timeAlertContent}>
-                  <strong>Invalid Time Window:</strong>{" "}
-                  {timeValidation.errorMessage}
+                {/* Policy Toggles */}
+                <div className={styles.policyTogglesList}>
+                  {/* Toggle 1: Allow Late Sign-In */}
+                  <div
+                    className={`${styles.toggleCard} ${allowLateSignIn ? styles.toggleCardActive : ""}`}
+                    onClick={() => setAllowLateSignIn(!allowLateSignIn)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className={styles.toggleCardInfo}>
+                      <div className={styles.toggleCardTitle}>
+                        <span>Allow Late Sign-In</span>
+                        <span
+                          className={`${styles.toggleTag} ${allowLateSignIn ? styles.tagAmber : styles.tagSlate}`}
+                        >
+                          {allowLateSignIn ? "Late Tagging Active" : "Strict Lockout"}
+                        </span>
+                      </div>
+                      <div className={styles.toggleCardDesc}>
+                        {allowLateSignIn
+                          ? `Workers arriving after ${timeValidation.formattedClose} can still clock in, but their record will be explicitly tagged as LATE in audit records.`
+                          : `Attendance strictly locks at ${timeValidation.formattedClose}. No sign-ins allowed once the window closes.`}
+                      </div>
+                    </div>
+                    <div
+                      className={`${styles.toggleSwitch} ${allowLateSignIn ? styles.toggleSwitchChecked : ""}`}
+                    >
+                      <div className={styles.toggleThumb} />
+                    </div>
+                  </div>
+
+                  {/* Toggle 2: Enable Sign-Out */}
+                  <div
+                    className={`${styles.toggleCard} ${enableSignOut ? styles.toggleCardActive : ""}`}
+                    onClick={() => setEnableSignOut(!enableSignOut)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className={styles.toggleCardInfo}>
+                      <div className={styles.toggleCardTitle}>
+                        <span>Enable Worker Sign-Out</span>
+                        <span
+                          className={`${styles.toggleTag} ${enableSignOut ? styles.tagBlue : styles.tagSlate}`}
+                        >
+                          {enableSignOut ? "Sign-Out Enabled" : "Check-In Only"}
+                        </span>
+                      </div>
+                      <div className={styles.toggleCardDesc}>
+                        {enableSignOut
+                          ? "Workers are required or permitted to sign out at the end of their shift."
+                          : "Workers only sign in once. Sign-out is disabled."}
+                      </div>
+                    </div>
+                    <div
+                      className={`${styles.toggleSwitch} ${enableSignOut ? styles.toggleSwitchChecked : ""}`}
+                    >
+                      <div className={styles.toggleThumb} />
+                    </div>
+                  </div>
+
+                  {/* Conditional Sign-Out Time Input */}
+                  {enableSignOut && (
+                    <div
+                      style={{
+                        backgroundColor: "#EFF6FF",
+                        border: "1.5px solid #BFDBFE",
+                        borderRadius: 12,
+                        padding: 16,
+                        marginTop: 4,
+                      }}
+                    >
+                      <div className={styles.fieldGroup}>
+                        <label htmlFor="signOutTime" style={{ color: "#1E3A8A" }}>
+                          Sign-Out Earliest Time *
+                        </label>
+                        <input
+                          id="signOutTime"
+                          type="time"
+                          value={signOutTime}
+                          onChange={(e) => setSignOutTime(e.target.value)}
+                          className={
+                            !timeValidation.isSignOutValidFormat
+                              ? styles.inputError
+                              : ""
+                          }
+                          required
+                        />
+                        {!timeValidation.isSignOutValidFormat ? (
+                          <span className={styles.fieldErrorText}>
+                            <AlertCircle size={12} /> Format must be HH:mm (e.g. 05:00 PM)
+                          </span>
+                        ) : (
+                          <span className={styles.fieldHint} style={{ color: "#3B82F6" }}>
+                            Earliest time workers can sign out (
+                            {timeValidation.formattedSignOut || "05:00 PM"}). Workers
+                            can sign out anytime from this time onwards — there is no close cutoff.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className={styles.timeAlertSuccess}>
-                <Clock size={18} className={styles.timeAlertIcon} />
-                <div className={styles.timeAlertContent}>
-                  <strong>Strict Check-In Window:</strong> Sign-in will be open
-                  strictly between{" "}
-                  <strong>{timeValidation.formattedOpen}</strong> and{" "}
-                  <strong>{timeValidation.formattedClose}</strong> (
-                  {formatDurationMinutes(timeValidation.durationMinutes)} active
-                  window) on scheduled operating days. Once closed, check-in is
-                  disabled — there is no late tolerance.
-                </div>
-              </div>
+
+                {/* Immediate Real-Time Validation Alert Prompt */}
+                {!timeValidation.isValid ? (
+                  <div className={styles.timeAlertError} role="alert">
+                    <AlertTriangle size={18} className={styles.timeAlertIcon} />
+                    <div className={styles.timeAlertContent}>
+                      <strong>Invalid Time Window:</strong>{" "}
+                      {timeValidation.errorMessage}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.timeAlertSuccess}>
+                    <Clock size={18} className={styles.timeAlertIcon} />
+                    <div className={styles.timeAlertContent}>
+                      <strong>Unified Check-In Window:</strong> Sign-in will open between{" "}
+                      <strong>{timeValidation.formattedOpen}</strong> and{" "}
+                      <strong>{timeValidation.formattedClose}</strong> (
+                      {formatDurationMinutes(timeValidation.durationMinutes)} active window) across all selected operating days.
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Mode 2: Per-Day Schedule */}
+            {scheduleMode === "PER_DAY" && (
+              <>
+                {serviceDays.length === 0 ? (
+                  <div className={styles.timeAlertError} style={{ marginTop: 12 }}>
+                    <AlertTriangle size={18} className={styles.timeAlertIcon} />
+                    <div className={styles.timeAlertContent}>
+                      Please select at least one active operating day above to configure day-specific hours.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.fieldGroup} style={{ marginTop: 8 }}>
+                      <label>Select Day to Configure</label>
+                      <span className={styles.fieldHint}>
+                        Pick an active day from your selection above to customize its sign-in and sign-out times.
+                      </span>
+                      <div className={styles.dayTabsList}>
+                        {serviceDays.map((d) => {
+                          const dayObj = WEEK_DAYS.find((w) => w.id === d);
+                          const sched = getActiveDaySchedule(d);
+                          const isSelected = activeScheduleDay === d;
+                          return (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`${styles.dayTabBtn} ${isSelected ? styles.dayTabBtnActive : ""}`}
+                              onClick={() => setActiveScheduleDay(d)}
+                            >
+                              <span>{dayObj?.name || `Day ${d}`}</span>
+                              <span className={styles.dayTabHoursBadge}>
+                                {format12Hour(sched.arrivalCutoff)} - {format12Hour(sched.lateTolerance)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Active Day Schedule Editor */}
+                    {(() => {
+                      const activeSched = getActiveDaySchedule(activeScheduleDay);
+                      const activeDayObj = WEEK_DAYS.find((w) => w.id === activeScheduleDay);
+                      const dayVal = validateAttendanceWindow(
+                        activeSched.arrivalCutoff,
+                        activeSched.lateTolerance,
+                        activeSched.enableSignOut,
+                        activeSched.signOutTime,
+                      );
+
+                      return (
+                        <div className={styles.dayEditorBox}>
+                          <div className={styles.dayEditorHeader}>
+                            <div>
+                              <div className={styles.dayEditorTitle}>
+                                <Calendar size={18} color="#2563EB" />
+                                <span>{activeDayObj?.label || "Day"} Schedule Configuration</span>
+                              </div>
+                              <span className={styles.dayEditorSub}>
+                                Setting times specifically for {activeDayObj?.label}.
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.copyAllBtn}
+                              onClick={copyActiveDayToAll}
+                              title={`Copy ${activeDayObj?.label} times to all selected active days`}
+                            >
+                              <Copy size={13} />
+                              <span>Apply to All Active Days</span>
+                            </button>
+                          </div>
+
+                          <div className={styles.inputsGrid}>
+                            <div className={styles.fieldGroup}>
+                              <label htmlFor={`arrivalCutoff_${activeScheduleDay}`}>
+                                Sign-In Window Open Time *
+                              </label>
+                              <input
+                                id={`arrivalCutoff_${activeScheduleDay}`}
+                                type="time"
+                                value={activeSched.arrivalCutoff}
+                                onChange={(e) =>
+                                  updateDaySchedule(activeScheduleDay, { arrivalCutoff: e.target.value })
+                                }
+                                className={
+                                  !dayVal.isOpenValidFormat || !dayVal.isOrderValid
+                                    ? styles.inputError
+                                    : ""
+                                }
+                                required
+                              />
+                              {!dayVal.isOpenValidFormat ? (
+                                <span className={styles.fieldErrorText}>
+                                  <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:00 AM)
+                                </span>
+                              ) : !dayVal.isOrderValid ? (
+                                <span className={styles.fieldErrorText}>
+                                  <AlertCircle size={12} /> Open time must be earlier than close time ({dayVal.formattedClose})
+                                </span>
+                              ) : (
+                                <span className={styles.fieldHint}>
+                                  Check-in starts at {dayVal.formattedOpen} on {activeDayObj?.label}.
+                                </span>
+                              )}
+                            </div>
+
+                            <div className={styles.fieldGroup}>
+                              <label htmlFor={`lateTolerance_${activeScheduleDay}`}>
+                                Sign-In Window Close Time *
+                              </label>
+                              <input
+                                id={`lateTolerance_${activeScheduleDay}`}
+                                type="time"
+                                value={activeSched.lateTolerance}
+                                onChange={(e) =>
+                                  updateDaySchedule(activeScheduleDay, { lateTolerance: e.target.value })
+                                }
+                                className={
+                                  !dayVal.isCloseValidFormat || !dayVal.isOrderValid
+                                    ? styles.inputError
+                                    : ""
+                                }
+                                required
+                              />
+                              {!dayVal.isCloseValidFormat ? (
+                                <span className={styles.fieldErrorText}>
+                                  <AlertCircle size={12} /> Format must be HH:mm (e.g. 07:30 AM)
+                                </span>
+                              ) : !dayVal.isOrderValid ? (
+                                <span className={styles.fieldErrorText}>
+                                  <AlertCircle size={12} /> Close time must be later than open time ({dayVal.formattedOpen})
+                                </span>
+                              ) : (
+                                <span className={styles.fieldHint}>
+                                  {activeSched.allowLateSignIn
+                                    ? `Arrival deadline (${dayVal.formattedClose}). Sign-ins after this will carry a LATE tag.`
+                                    : `Strict check-in cutoff (${dayVal.formattedClose}). Check-ins stop immediately.`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Day-specific Policy Toggles */}
+                          <div className={styles.policyTogglesList}>
+                            <div
+                              className={`${styles.toggleCard} ${activeSched.allowLateSignIn ? styles.toggleCardActive : ""}`}
+                              onClick={() =>
+                                updateDaySchedule(activeScheduleDay, {
+                                  allowLateSignIn: !activeSched.allowLateSignIn,
+                                })
+                              }
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <div className={styles.toggleCardInfo}>
+                                <div className={styles.toggleCardTitle}>
+                                  <span>Allow Late Sign-In</span>
+                                  <span
+                                    className={`${styles.toggleTag} ${activeSched.allowLateSignIn ? styles.tagAmber : styles.tagSlate}`}
+                                  >
+                                    {activeSched.allowLateSignIn ? "Late Tagging Active" : "Strict Lockout"}
+                                  </span>
+                                </div>
+                                <div className={styles.toggleCardDesc}>
+                                  {activeSched.allowLateSignIn
+                                    ? `On ${activeDayObj?.label}, workers arriving after ${dayVal.formattedClose} can still clock in, tagged as LATE.`
+                                    : `On ${activeDayObj?.label}, attendance strictly locks at ${dayVal.formattedClose}.`}
+                                </div>
+                              </div>
+                              <div
+                                className={`${styles.toggleSwitch} ${activeSched.allowLateSignIn ? styles.toggleSwitchChecked : ""}`}
+                              >
+                                <div className={styles.toggleThumb} />
+                              </div>
+                            </div>
+
+                            <div
+                              className={`${styles.toggleCard} ${activeSched.enableSignOut ? styles.toggleCardActive : ""}`}
+                              onClick={() =>
+                                updateDaySchedule(activeScheduleDay, {
+                                  enableSignOut: !activeSched.enableSignOut,
+                                })
+                              }
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <div className={styles.toggleCardInfo}>
+                                <div className={styles.toggleCardTitle}>
+                                  <span>Enable Worker Sign-Out</span>
+                                  <span
+                                    className={`${styles.toggleTag} ${activeSched.enableSignOut ? styles.tagBlue : styles.tagSlate}`}
+                                  >
+                                    {activeSched.enableSignOut ? "Sign-Out Enabled" : "Check-In Only"}
+                                  </span>
+                                </div>
+                                <div className={styles.toggleCardDesc}>
+                                  {activeSched.enableSignOut
+                                    ? `Workers can sign out on ${activeDayObj?.label}.`
+                                    : `Sign-out is disabled for ${activeDayObj?.label}.`}
+                                </div>
+                              </div>
+                              <div
+                                className={`${styles.toggleSwitch} ${activeSched.enableSignOut ? styles.toggleSwitchChecked : ""}`}
+                              >
+                                <div className={styles.toggleThumb} />
+                              </div>
+                            </div>
+
+                            {activeSched.enableSignOut && (
+                              <div
+                                style={{
+                                  backgroundColor: "#EFF6FF",
+                                  border: "1.5px solid #BFDBFE",
+                                  borderRadius: 12,
+                                  padding: 16,
+                                  marginTop: 4,
+                                }}
+                              >
+                                <div className={styles.fieldGroup}>
+                                  <label
+                                    htmlFor={`signOutTime_${activeScheduleDay}`}
+                                    style={{ color: "#1E3A8A" }}
+                                  >
+                                    Sign-Out Earliest Time *
+                                  </label>
+                                  <input
+                                    id={`signOutTime_${activeScheduleDay}`}
+                                    type="time"
+                                    value={activeSched.signOutTime || "17:00"}
+                                    onChange={(e) =>
+                                      updateDaySchedule(activeScheduleDay, {
+                                        signOutTime: e.target.value,
+                                      })
+                                    }
+                                    className={
+                                      !dayVal.isSignOutValidFormat ? styles.inputError : ""
+                                    }
+                                    required
+                                  />
+                                  {!dayVal.isSignOutValidFormat ? (
+                                    <span className={styles.fieldErrorText}>
+                                      <AlertCircle size={12} /> Format must be HH:mm (e.g. 05:00 PM)
+                                    </span>
+                                  ) : (
+                                    <span className={styles.fieldHint} style={{ color: "#3B82F6" }}>
+                                      Earliest time workers can sign out on {activeDayObj?.label} (
+                                      {dayVal.formattedSignOut || "05:00 PM"}).
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {!dayVal.isValid ? (
+                            <div className={styles.timeAlertError} role="alert">
+                              <AlertTriangle size={18} className={styles.timeAlertIcon} />
+                              <div className={styles.timeAlertContent}>
+                                <strong>Invalid Time for {activeDayObj?.label}:</strong> {dayVal.errorMessage}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={styles.timeAlertSuccess}>
+                              <Clock size={18} className={styles.timeAlertIcon} />
+                              <div className={styles.timeAlertContent}>
+                                <strong>{activeDayObj?.label} Schedule:</strong> Check-in open between{" "}
+                                <strong>{dayVal.formattedOpen}</strong> and <strong>{dayVal.formattedClose}</strong>
+                                {activeSched.enableSignOut ? ` • Sign-out starts at ${dayVal.formattedSignOut}` : " • Check-in only"}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* All Days Overview Cards */}
+                    <div className={styles.dayOverviewGrid}>
+                      {serviceDays.map((d) => {
+                        const dayObj = WEEK_DAYS.find((w) => w.id === d);
+                        const sched = getActiveDaySchedule(d);
+                        const isOpen = sched.arrivalCutoff;
+                        const isClose = sched.lateTolerance;
+                        return (
+                          <div
+                            key={d}
+                            className={styles.dayOverviewCard}
+                            style={{
+                              borderColor: activeScheduleDay === d ? "#2563EB" : undefined,
+                              backgroundColor: activeScheduleDay === d ? "#EFF6FF" : undefined,
+                              cursor: "pointer",
+                            }}
+                            onClick={() => setActiveScheduleDay(d)}
+                          >
+                            <div className={styles.dayOverviewDayName}>
+                              {dayObj?.label} {activeScheduleDay === d && "• Editing"}
+                            </div>
+                            <div className={styles.dayOverviewTime}>
+                              {format12Hour(isOpen)} - {format12Hour(isClose)}
+                            </div>
+                            <div className={styles.dayOverviewDetails}>
+                              {sched.allowLateSignIn ? "Late tag allowed" : "Strict cutoff"}
+                              {sched.enableSignOut ? ` • Sign-out ${format12Hour(sched.signOutTime || "17:00")}` : " • No sign-out"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         )}

@@ -17,13 +17,23 @@ export interface GeoFallback {
   isCalibrated?: boolean;
 }
 
+export interface DaySchedule {
+  arrivalCutoff?: string; // e.g. "07:00"
+  lateTolerance?: string; // e.g. "07:30"
+  allowLateSignIn?: boolean; // If true, workers can sign in after close time marked LATE
+  enableSignOut?: boolean; // If true, workers are required/allowed to sign out
+  signOutTime?: string; // e.g. "17:00"
+}
+
 export interface PolicySettings {
   serviceDays: number[]; // 0 for Sunday, 3 for Wednesday, etc.
-  arrivalCutoff: string; // e.g. "07:00" (Sign-In Window Open Time)
-  lateTolerance?: string; // e.g. "07:30" (Sign-In Window Close Time)
-  allowLateSignIn?: boolean; // If true, workers can sign in after close time carrying a "LATE" tag
-  enableSignOut?: boolean; // If true, workers are required/allowed to sign out
-  signOutTime?: string; // e.g. "17:00" (Sign-out starts from this time; no close cutoff)
+  scheduleMode?: 'UNIFIED' | 'PER_DAY'; // 'UNIFIED' = same for all active days; 'PER_DAY' = custom per day
+  arrivalCutoff: string; // e.g. "07:00" (Default / Unified Sign-In Window Open Time)
+  lateTolerance?: string; // e.g. "07:30" (Default / Unified Sign-In Window Close Time)
+  allowLateSignIn?: boolean; // Default / Unified
+  enableSignOut?: boolean; // Default / Unified
+  signOutTime?: string; // Default / Unified
+  daySchedules?: Record<number | string, DaySchedule>; // Custom schedules keyed by day number 0..6
   syncCutoff?: string; // Deprecated/optional
 }
 

@@ -39,6 +39,13 @@ This repository contains the **Admin Web Portal**, the central command dashboard
   - Synchronous data mounting eliminates any split-second "Pending Calibration" flashes.
 
 ### 3. Smart Policy Configuration & Punctuality Engine
+- **Schedule Configuration Modes (`scheduleMode`):**
+  - **One Time for All Days (`UNIFIED` · Default):** Configures a single arrival open time, cutoff time, late tolerance setting, and departure sign-out hour that applies uniformly across every selected active operating day.
+  - **Different Times per Day (`PER_DAY`):** Designed for organizations with variable service schedules (e.g. churches with Sunday morning call-ups at 07:00 AM and mid-week evening services at 05:30 PM, or businesses with shorter Friday workdays).
+    - **Active Day Tab Selector:** Interactive day tabs allowing administrators to switch between and configure any active day selected in the schedule.
+    - **Day Editor Box:** Independently customize Sign-In Window Open Time, Close Time, Late Tagging (`allowLateSignIn`), and Sign-Out (`enableSignOut` + `signOutTime`) for each day.
+    - **Apply to All Active Days:** One-click batch button to propagate the current day's time settings to all other selected days.
+    - **All Days Overview Grid:** At-a-glance summary cards showing every active day's call-up window, punctuality rules, and sign-out hours.
 - **Sign-In Window Times:** Configure official **Sign-In Open Time** (e.g., 07:00 AM) and **Sign-In Close Time** (e.g., 07:30 AM).
 - **Grace Period & Late Tagging (`allowLateSignIn`):**
   - **Grace Period Enabled:** Workers who clock in after the window closes are permitted to register attendance, but their record is tagged with an amber **`LATE`** badge across all dashboards, matrices, and exports.

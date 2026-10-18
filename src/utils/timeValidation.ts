@@ -179,3 +179,41 @@ export const validateAttendanceWindow = (
     formattedSignOut,
   };
 };
+
+export interface DaySchedulesValidationResult {
+  isValid: boolean;
+  dayErrors: Record<number, string>;
+  firstError?: string;
+}
+
+export const validateDaySchedules = (
+  serviceDays: number[],
+  daySchedules: Record<number | string, import('../types').DaySchedule>,
+  defaultSchedule: import('../types').DaySchedule
+): DaySchedulesValidationResult => {
+  const dayErrors: Record<number, string> = {};
+  let firstError: string | undefined;
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  for (const day of serviceDays) {
+    const sched = daySchedules[day] || defaultSchedule;
+    const openTime = sched.arrivalCutoff || defaultSchedule.arrivalCutoff || '07:00';
+    const closeTime = sched.lateTolerance || defaultSchedule.lateTolerance || '07:30';
+    const enableSignOut = sched.enableSignOut !== undefined ? sched.enableSignOut : defaultSchedule.enableSignOut;
+    const signOutTime = sched.signOutTime || defaultSchedule.signOutTime || '17:00';
+
+    const result = validateAttendanceWindow(openTime, closeTime, enableSignOut, signOutTime);
+    if (!result.isValid) {
+      const name = DAY_NAMES[day] || `Day ${day}`;
+      const msg = `${name}: ${result.errorMessage}`;
+      dayErrors[day] = msg;
+      if (!firstError) firstError = msg;
+    }
+  }
+
+  return {
+    isValid: Object.keys(dayErrors).length === 0,
+    dayErrors,
+    firstError,
+  };
+};

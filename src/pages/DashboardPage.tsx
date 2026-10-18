@@ -138,6 +138,13 @@ export const DashboardPage: React.FC = () => {
 
   const isFullyConfigured = isGeofenceOnly ? isGeoConfigured : (isWifiConfigured && isGeoConfigured);
 
+  const todayDay = new Date().getDay();
+  const isSignOutEnabled = Boolean(
+    church?.policySettings?.scheduleMode === "PER_DAY"
+      ? (church.policySettings.daySchedules?.[todayDay]?.enableSignOut ?? church.policySettings.enableSignOut)
+      : church?.policySettings?.enableSignOut
+  ) || attendance.some((a) => !!a.signedOutAt);
+
   return (
     <div className={styles.dashboardContainer}>
       {/* Sleek Header */}
@@ -266,7 +273,7 @@ export const DashboardPage: React.FC = () => {
           </span>
         </div>
 
-        {church?.policySettings?.enableSignOut && (
+        {isSignOutEnabled && (
           <div className={styles.metricCard}>
             <span className={styles.metricLabel}>Signed Out</span>
             <span className={styles.metricValue} style={{ color: "#2563EB" }}>
@@ -379,7 +386,7 @@ export const DashboardPage: React.FC = () => {
                 <th>Team Member</th>
                 <th>Clock-In Time</th>
                 <th>Punctuality</th>
-                {church?.policySettings?.enableSignOut && <th>Sign-Out Time</th>}
+                {isSignOutEnabled && <th>Sign-Out Time</th>}
                 <th>Cloud Sync Time</th>
                 <th>Sync Latency</th>
                 <th>Verification Anchor</th>
@@ -388,7 +395,7 @@ export const DashboardPage: React.FC = () => {
             <tbody>
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={church?.policySettings?.enableSignOut ? 7 : 6}>
+                  <td colSpan={isSignOutEnabled ? 7 : 6}>
                     <div className={styles.emptyState}>
                       <div className={styles.emptyStateTitle}>
                         No check-ins found
@@ -442,7 +449,7 @@ export const DashboardPage: React.FC = () => {
                         </span>
                       </td>
 
-                      {church?.policySettings?.enableSignOut && (
+                      {isSignOutEnabled && (
                         <td>
                           {item.signedOutAt ? (
                             <div className={styles.timeDisplay}>
