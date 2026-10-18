@@ -38,22 +38,34 @@ This repository contains the **Admin Web Portal**, the central command dashboard
   - **Step 2:** Router prerequisite checklist with hotspot detection notice.
   - Synchronous data mounting eliminates any split-second "Pending Calibration" flashes.
 
-### 3. Interactive Web Geofence & Location Editor
+### 3. Smart Policy Configuration & Punctuality Engine
+- **Sign-In Window Times:** Configure official **Sign-In Open Time** (e.g., 07:00 AM) and **Sign-In Close Time** (e.g., 07:30 AM).
+- **Grace Period & Late Tagging (`allowLateSignIn`):**
+  - **Grace Period Enabled:** Workers who clock in after the window closes are permitted to register attendance, but their record is tagged with an amber **`LATE`** badge across all dashboards, matrices, and exports.
+  - **Zero Late Tolerance:** When disabled, sign-in strictly locks when the close window passes.
+- **Biometric Departure Sign-Out (`enableSignOut`):**
+  - Administrators can enable mandatory/optional end-of-day sign-outs.
+  - Set a **Sign-Out Time** (e.g., 05:00 PM / 17:00).
+  - **No Closing Cutoff & No Late Penalty:** Sign-out remains permanently open from the configured departure time until midnight.
+- **Zero Sync Cutoff Overhead:**
+  - Removed cumbersome daily cloud sync cutoffs. All punches buffered offline are automatically pushed by the client app before the next working day.
+
+### 4. Interactive Web Geofence & Location Editor
 - **Interactive Pinpoint & Search:** Search venue addresses or pinpoint coordinates directly on satellite maps with OpenStreetMap / Google Maps integration.
 - **Perimeter Presets:** Select radius presets (10m, 20m, 30m, 40m, 50m, 80m, 100m) with real-time diameter calculation and live visual confirmation.
 - **Browser Geolocation Fallback:** Instant "Use Current Location" button for on-site administrative calibration.
 
-### 4. Real-Time Dashboard & Live Attendance Stream
-- **Live Attendance Metrics:** Real-time counts for Present, Late, and Absent workers with live velocity indicators.
+### 5. Real-Time Dashboard & Live Attendance Stream
+- **Live Attendance KPI Cards:** Real-time counts for **Total Present**, **On-Time Arrivals**, **Late Arrivals**, and **Signed Out Workers**.
 - **Dynamic Attendance Stream:** Sub-second Firestore snapshot stream displaying clock-ins the millisecond workers punch in.
-- **Audit Trail & Identity Verification:** Traps arrival timestamps, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), native biometric identity verification (`BIOMETRIC` vs. `DEVICE_PASSCODE`), and device hardware signatures.
+- **Detailed Audit Trail:** Displays arrival timestamp, punctuality badge (`ON-TIME` vs. `LATE`), departure sign-out timestamp, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), native biometric confirmation, and device hardware signatures.
 
-### 5. Monthly Audit Matrix & Export Engine
+### 6. Monthly Audit Matrix & Export Engine
 - **Scheduled Day Aggregation:** Automatically groups workforce attendance across designated meeting and service days (e.g. Sundays, Wednesdays, weekdays).
-- **Status & Punctuality Matrix:** Color-coded status badges for on-time, late, and absent attendance across months.
+- **Status & Punctuality Matrix:** Color-coded status badges for on-time, late, and absent attendance across months, including arrival and departure times.
 - **CSV & Excel Export:** One-click data exports for payroll processing and institutional reporting.
 
-### 6. Workforce & Device Binding Management
+### 7. Workforce & Device Binding Management
 - **Randomized Organization Pairing Codes:** High-entropy format (`XX-XXX-XXX`, e.g., `KW-RTX-482`) completely decoupled from location names to eliminate stale initials when changing state or premises.
 - **Hardware Device Lock:** Cryptographically links each employee's account to their registered smartphone hardware identifier.
 - **Administrative Device Reset:** Allows administrators to unbind or transfer devices when an employee replaces their smartphone.

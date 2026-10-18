@@ -19,9 +19,12 @@ export interface GeoFallback {
 
 export interface PolicySettings {
   serviceDays: number[]; // 0 for Sunday, 3 for Wednesday, etc.
-  arrivalCutoff: string; // e.g. "07:30"
-  lateTolerance?: string; // e.g. "07:45"
-  syncCutoff: string;    // e.g. "12:00"
+  arrivalCutoff: string; // e.g. "07:00" (Sign-In Window Open Time)
+  lateTolerance?: string; // e.g. "07:30" (Sign-In Window Close Time)
+  allowLateSignIn?: boolean; // If true, workers can sign in after close time carrying a "LATE" tag
+  enableSignOut?: boolean; // If true, workers are required/allowed to sign out
+  signOutTime?: string; // e.g. "17:00" (Sign-out starts from this time; no close cutoff)
+  syncCutoff?: string; // Deprecated/optional
 }
 
 export interface CalibrationSessionData {
@@ -76,6 +79,8 @@ export interface AttendanceRecord {
   syncedAt: string;    // ISO string or timestamp
   verificationMethod: VerificationMethod;
   status: AttendanceStatus;
+  signedOutAt?: string; // ISO string when signed out
+  signOutDisplayTime?: string; // e.g. "05:15:30 PM"
 }
 
 export interface UserProfile {

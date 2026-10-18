@@ -34,8 +34,14 @@ export const DashboardPage: React.FC = () => {
     return () => unsubscribe();
   }, [church?.id]);
 
-  // Metric computations (No late concept: attendance window strictly gates sign-in)
+  // Metric computations (Punctuality status and sign-out tracking)
   const totalCheckedIn = attendance.length;
+  const onTimeCount = attendance.filter(
+    (a) => a.status === "ON_TIME" || !a.status,
+  ).length;
+  const lateCount = attendance.filter((a) => a.status === "LATE").length;
+  const signedOutCount = attendance.filter((a) => !!a.signedOutAt).length;
+
   const wifiVerifiedCount = attendance.filter(
     (a) => a.verificationMethod === "WIFI_BSSID",
   ).length;
@@ -236,33 +242,43 @@ export const DashboardPage: React.FC = () => {
           </span>
         </div>
 
-        {!isGeofenceOnly && (
-          <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>Wi-Fi Verified</span>
-            <span className={styles.metricValue} style={{ color: "#059669" }}>
-              {wifiVerifiedCount}
-            </span>
-            <span className={styles.metricSubtext}>
-              {totalCheckedIn > 0
-                ? `${Math.round((wifiVerifiedCount / totalCheckedIn) * 100)}% via router hardware`
-                : "Primary presence anchor"}
-            </span>
-          </div>
-        )}
-
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>GPS Geofence Verified</span>
-          <span className={styles.metricValue} style={{ color: "#2563EB" }}>
-            {geoVerifiedCount}
+          <span className={styles.metricLabel}>On-Time Arrivals</span>
+          <span className={styles.metricValue} style={{ color: "#059669" }}>
+            {onTimeCount}
           </span>
           <span className={styles.metricSubtext}>
             {totalCheckedIn > 0
-              ? `${Math.round((geoVerifiedCount / totalCheckedIn) * 100)}% via ${church?.geoFallback?.radiusMeters || 10}m perimeter`
-              : isGeofenceOnly
-                ? "Primary presence anchor"
-                : "Fail-safe presence anchor"}
+              ? `${Math.round((onTimeCount / totalCheckedIn) * 100)}% of today's attendance`
+              : "Within official arrival window"}
           </span>
         </div>
+
+        <div className={styles.metricCard}>
+          <span className={styles.metricLabel}>Late Arrivals</span>
+          <span className={styles.metricValue} style={{ color: lateCount > 0 ? "#D97706" : "#64748B" }}>
+            {lateCount}
+          </span>
+          <span className={styles.metricSubtext}>
+            {lateCount > 0
+              ? `${Math.round((lateCount / totalCheckedIn) * 100)}% clocked after cutoff`
+              : "Zero late arrivals"}
+          </span>
+        </div>
+
+        {church?.policySettings?.enableSignOut && (
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>Signed Out</span>
+            <span className={styles.metricValue} style={{ color: "#2563EB" }}>
+              {signedOutCount} / {totalCheckedIn}
+            </span>
+            <span className={styles.metricSubtext}>
+              {totalCheckedIn > 0
+                ? `${Math.round((signedOutCount / totalCheckedIn) * 100)}% completed shift`
+                : "Shift departure tracking"}
+            </span>
+          </div>
+        )}
 
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Active Units</span>
@@ -362,6 +378,8 @@ export const DashboardPage: React.FC = () => {
               <tr>
                 <th>Team Member</th>
                 <th>Clock-In Time</th>
+                <th>Punctuality</th>
+                {church?.policySettings?.enableSignOut && <th>Sign-Out Time</th>}
                 <th>Cloud Sync Time</th>
                 <th>Sync Latency</th>
                 <th>Verification Anchor</th>
@@ -370,7 +388,7 @@ export const DashboardPage: React.FC = () => {
             <tbody>
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={church?.policySettings?.enableSignOut ? 7 : 6}>
                     <div className={styles.emptyState}>
                       <div className={styles.emptyStateTitle}>
                         No check-ins found
@@ -411,6 +429,37 @@ export const DashboardPage: React.FC = () => {
                           </span>
                         </div>
                       </td>
+
+                      <td>
+                        <span
+                          className={`badge ${item.status === "LATE" ? "badge-warning" : "badge-success"}`}
+                          style={{
+                            fontWeight: 700,
+                            letterSpacing: "0.03em",
+                          }}
+                        >
+                          {item.status === "LATE" ? "LATE" : "ON-TIME"}
+                        </span>
+                      </td>
+
+                      {church?.policySettings?.enableSignOut && (
+                        <td>
+                          {item.signedOutAt ? (
+                            <div className={styles.timeDisplay}>
+                              <span style={{ color: "#2563EB", fontWeight: 600 }}>
+                                {item.signOutDisplayTime || formatTimeWithSec(item.signedOutAt)}
+                              </span>
+                              <span className={styles.timeSubBadge} style={{ color: "#059669" }}>
+                                signed out
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "#94A3B8" }}>
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                      )}
 
                       <td>
                         <div className={styles.timeDisplay}>

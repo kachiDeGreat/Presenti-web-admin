@@ -320,9 +320,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         policySettings: {
           serviceDays: [1, 2, 3, 4, 5],
-          arrivalCutoff: '08:00',
-          lateTolerance: '08:30',
-          syncCutoff: '17:00',
+          arrivalCutoff: '07:00',
+          lateTolerance: '07:30',
+          allowLateSignIn: true,
+          enableSignOut: false,
+          signOutTime: '17:00',
         },
       };
       await saveChurchDoc(newChurch);
@@ -382,9 +384,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         policySettings: {
           serviceDays: [1, 2, 3, 4, 5],
-          arrivalCutoff: '08:00',
-          lateTolerance: '08:30',
-          syncCutoff: '17:00',
+          arrivalCutoff: '07:00',
+          lateTolerance: '07:30',
+          allowLateSignIn: true,
+          enableSignOut: false,
+          signOutTime: '17:00',
         },
       };
       saveStoredChurch(newChurch);

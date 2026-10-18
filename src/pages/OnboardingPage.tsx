@@ -221,16 +221,19 @@ export const OnboardingPage: React.FC = () => {
   const [customDept, setCustomDept] = useState("");
 
   // Step 3: Service Schedule & Arrival Policy
-  const [serviceDays, setServiceDays] = useState<number[]>([0, 3]); // Sunday and Wednesday
-  const [arrivalCutoff, setArrivalCutoff] = useState("07:30");
-  const [lateTolerance, setLateTolerance] = useState("07:45");
-  const [syncCutoff, setSyncCutoff] = useState("12:00");
+  const [serviceDays, setServiceDays] = useState<number[]>([1, 2, 3, 4, 5]); // Weekdays default
+  const [arrivalCutoff, setArrivalCutoff] = useState("07:00");
+  const [lateTolerance, setLateTolerance] = useState("07:30");
+  const [allowLateSignIn, setAllowLateSignIn] = useState(true);
+  const [enableSignOut, setEnableSignOut] = useState(false);
+  const [signOutTime, setSignOutTime] = useState("17:00");
 
   // Real-time regex and attendance window order validation
   const timeValidation = validateAttendanceWindow(
     arrivalCutoff,
     lateTolerance,
-    syncCutoff,
+    enableSignOut,
+    signOutTime,
   );
 
   // Real-time regex validation across Step 1 form fields
@@ -452,7 +455,9 @@ export const OnboardingPage: React.FC = () => {
           serviceDays,
           arrivalCutoff,
           lateTolerance,
-          syncCutoff,
+          allowLateSignIn,
+          enableSignOut,
+          signOutTime: enableSignOut ? signOutTime : undefined,
         },
       });
 
@@ -1019,37 +1024,117 @@ export const OnboardingPage: React.FC = () => {
                   </span>
                 ) : (
                   <span className={styles.fieldHint}>
-                    When check-in officially closes (
-                    {timeValidation.formattedClose}). Attendance registration
-                    stops and the app locks — zero late tolerance.
+                    {allowLateSignIn
+                      ? `Official arrival deadline (${timeValidation.formattedClose}). Check-ins after this time will carry a LATE tag.`
+                      : `Strict check-in cutoff (${timeValidation.formattedClose}). Check-ins stop and app locks immediately.`}
                   </span>
                 )}
+              </div>
+            </div>
+
+            {/* Policy Toggles */}
+            <div className={styles.policyTogglesList}>
+              {/* Toggle 1: Allow Late Sign-In */}
+              <div
+                className={`${styles.toggleCard} ${allowLateSignIn ? styles.toggleCardActive : ""}`}
+                onClick={() => setAllowLateSignIn(!allowLateSignIn)}
+                role="button"
+                tabIndex={0}
+              >
+                <div className={styles.toggleCardInfo}>
+                  <div className={styles.toggleCardTitle}>
+                    <span>Allow Late Sign-In</span>
+                    <span
+                      className={`${styles.toggleTag} ${allowLateSignIn ? styles.tagAmber : styles.tagSlate}`}
+                    >
+                      {allowLateSignIn ? "Late Tagging Active" : "Strict Lockout"}
+                    </span>
+                  </div>
+                  <div className={styles.toggleCardDesc}>
+                    {allowLateSignIn
+                      ? `Workers arriving after ${timeValidation.formattedClose} can still clock in, but their record will be explicitly tagged as LATE in audit records.`
+                      : `Attendance strictly locks at ${timeValidation.formattedClose}. No sign-ins allowed once the window closes.`}
+                  </div>
+                </div>
+                <div
+                  className={`${styles.toggleSwitch} ${allowLateSignIn ? styles.toggleSwitchChecked : ""}`}
+                >
+                  <div className={styles.toggleThumb} />
+                </div>
               </div>
 
-              <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
-                <label htmlFor="syncCutoff">Daily Cloud Sync Cutoff *</label>
-                <input
-                  id="syncCutoff"
-                  type="time"
-                  value={syncCutoff}
-                  onChange={(e) => setSyncCutoff(e.target.value)}
-                  className={
-                    !timeValidation.isSyncValidFormat ? styles.inputError : ""
-                  }
-                  required
-                />
-                {!timeValidation.isSyncValidFormat ? (
-                  <span className={styles.fieldErrorText}>
-                    <AlertCircle size={12} /> Format must be HH:mm (e.g. 12:00
-                    PM)
-                  </span>
-                ) : (
-                  <span className={styles.fieldHint}>
-                    Daily deadline when all locally saved registers must be
-                    pushed to the cloud (e.g. 12:00 PM).
-                  </span>
-                )}
+              {/* Toggle 2: Enable Sign-Out */}
+              <div
+                className={`${styles.toggleCard} ${enableSignOut ? styles.toggleCardActive : ""}`}
+                onClick={() => setEnableSignOut(!enableSignOut)}
+                role="button"
+                tabIndex={0}
+              >
+                <div className={styles.toggleCardInfo}>
+                  <div className={styles.toggleCardTitle}>
+                    <span>Enable Worker Sign-Out</span>
+                    <span
+                      className={`${styles.toggleTag} ${enableSignOut ? styles.tagBlue : styles.tagSlate}`}
+                    >
+                      {enableSignOut ? "Sign-Out Enabled" : "Check-In Only"}
+                    </span>
+                  </div>
+                  <div className={styles.toggleCardDesc}>
+                    {enableSignOut
+                      ? "Workers are required or permitted to sign out at the end of their shift."
+                      : "Workers only sign in once. Sign-out is disabled."}
+                  </div>
+                </div>
+                <div
+                  className={`${styles.toggleSwitch} ${enableSignOut ? styles.toggleSwitchChecked : ""}`}
+                >
+                  <div className={styles.toggleThumb} />
+                </div>
               </div>
+
+              {/* Conditional Sign-Out Time Input */}
+              {enableSignOut && (
+                <div
+                  style={{
+                    backgroundColor: "#EFF6FF",
+                    border: "1.5px solid #BFDBFE",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginTop: 4,
+                  }}
+                >
+                  <div className={styles.fieldGroup}>
+                    <label htmlFor="signOutTime" style={{ color: "#1E3A8A" }}>
+                      Sign-Out Earliest Time *
+                    </label>
+                    <input
+                      id="signOutTime"
+                      type="time"
+                      value={signOutTime}
+                      onChange={(e) => setSignOutTime(e.target.value)}
+                      className={
+                        !timeValidation.isSignOutValidFormat
+                          ? styles.inputError
+                          : ""
+                      }
+                      required
+                    />
+                    {!timeValidation.isSignOutValidFormat ? (
+                      <span className={styles.fieldErrorText}>
+                        <AlertCircle size={12} /> Format must be HH:mm (e.g.
+                        05:00 PM)
+                      </span>
+                    ) : (
+                      <span className={styles.fieldHint} style={{ color: "#3B82F6" }}>
+                        Earliest time workers can sign out (
+                        {timeValidation.formattedSignOut || "05:00 PM"}). Workers
+                        can sign out anytime from this time onwards — there is no
+                        close cutoff.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Immediate Real-Time Validation Alert Prompt */}

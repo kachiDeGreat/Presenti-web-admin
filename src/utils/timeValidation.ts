@@ -1,7 +1,9 @@
 /**
- * Time validation utilities using strict regex verification
- * Enforces business rule: Sign-In Close Time MUST be greater than Sign-In Open Time.
- * Strictly zero late tolerance — once the window shuts, attendance is closed.
+ * Time validation utilities using strict regex verification.
+ * Enforces business rules:
+ * 1. Sign-In Close Time MUST be greater than Sign-In Open Time.
+ * 2. If Sign-Out is enabled, Sign-Out Time must be a valid time format.
+ * 3. Daily Cloud Sync cutoff is completely removed in favor of automatic backend synchronization.
  */
 
 // Strict 24-hour time regex pattern matching HH:mm (00:00 to 23:59) with optional :ss
@@ -11,14 +13,16 @@ export interface TimeWindowValidationResult {
   isValid: boolean;
   isOpenValidFormat: boolean;
   isCloseValidFormat: boolean;
-  isSyncValidFormat: boolean;
+  isSignOutValidFormat: boolean;
   isOrderValid: boolean;
   errorMessage: string | null;
   openMinutes: number;
   closeMinutes: number;
+  signOutMinutes?: number;
   durationMinutes: number;
   formattedOpen: string;
   formattedClose: string;
+  formattedSignOut?: string;
 }
 
 /**
@@ -64,37 +68,44 @@ export const formatDurationMinutes = (totalMinutes: number): string => {
  * Validates attendance window:
  * 1. Open time must match TIME_REGEX
  * 2. Close time must match TIME_REGEX
- * 3. Sync cutoff (if provided) must match TIME_REGEX
- * 4. Close time MUST be strictly greater than Open time (closeMinutes > openMinutes)
+ * 3. Close time MUST be strictly greater than Open time (closeMinutes > openMinutes)
+ * 4. If Sign-Out is enabled, Sign-Out time must match TIME_REGEX
  */
 export const validateAttendanceWindow = (
   openTime: string,
   closeTime: string,
-  syncTime?: string
+  enableSignOut?: boolean,
+  signOutTime?: string
 ): TimeWindowValidationResult => {
   const isOpenValidFormat = TIME_REGEX.test(openTime?.trim() || '');
   const isCloseValidFormat = TIME_REGEX.test(closeTime?.trim() || '');
-  const isSyncValidFormat = syncTime ? TIME_REGEX.test(syncTime.trim()) : true;
+  const isSignOutValidFormat = enableSignOut
+    ? TIME_REGEX.test(signOutTime?.trim() || '')
+    : true;
 
   const openMinutes = parseTimeToMinutes(openTime) ?? -1;
   const closeMinutes = parseTimeToMinutes(closeTime) ?? -1;
+  const signOutMinutes = enableSignOut && signOutTime ? parseTimeToMinutes(signOutTime) ?? -1 : undefined;
 
   const formattedOpen = isOpenValidFormat ? format12Hour(openTime) : openTime;
   const formattedClose = isCloseValidFormat ? format12Hour(closeTime) : closeTime;
+  const formattedSignOut = signOutTime && isSignOutValidFormat ? format12Hour(signOutTime) : signOutTime;
 
   if (!isOpenValidFormat) {
     return {
       isValid: false,
       isOpenValidFormat: false,
       isCloseValidFormat,
-      isSyncValidFormat,
+      isSignOutValidFormat,
       isOrderValid: false,
       errorMessage: 'Sign-In Window Open Time must follow standard 24-hour time format (HH:mm).',
       openMinutes,
       closeMinutes,
+      signOutMinutes,
       durationMinutes: 0,
       formattedOpen,
       formattedClose,
+      formattedSignOut,
     };
   }
 
@@ -103,30 +114,16 @@ export const validateAttendanceWindow = (
       isValid: false,
       isOpenValidFormat: true,
       isCloseValidFormat: false,
-      isSyncValidFormat,
+      isSignOutValidFormat,
       isOrderValid: false,
       errorMessage: 'Sign-In Window Close Time must follow standard 24-hour time format (HH:mm).',
       openMinutes,
       closeMinutes,
+      signOutMinutes,
       durationMinutes: 0,
       formattedOpen,
       formattedClose,
-    };
-  }
-
-  if (syncTime && !isSyncValidFormat) {
-    return {
-      isValid: false,
-      isOpenValidFormat: true,
-      isCloseValidFormat: true,
-      isSyncValidFormat: false,
-      isOrderValid: true,
-      errorMessage: 'Daily Cloud Sync Cutoff must follow standard 24-hour time format (HH:mm).',
-      openMinutes,
-      closeMinutes,
-      durationMinutes: 0,
-      formattedOpen,
-      formattedClose,
+      formattedSignOut,
     };
   }
 
@@ -135,14 +132,34 @@ export const validateAttendanceWindow = (
       isValid: false,
       isOpenValidFormat: true,
       isCloseValidFormat: true,
-      isSyncValidFormat,
+      isSignOutValidFormat,
       isOrderValid: false,
-      errorMessage: `Sign-In Window Close Time (${formattedClose}) must be later than Sign-In Window Open Time (${formattedOpen}). Attendance strictly stops when the window closes — there is no late tolerance.`,
+      errorMessage: `Sign-In Window Close Time (${formattedClose}) must be later than Sign-In Window Open Time (${formattedOpen}).`,
       openMinutes,
       closeMinutes,
+      signOutMinutes,
       durationMinutes: 0,
       formattedOpen,
       formattedClose,
+      formattedSignOut,
+    };
+  }
+
+  if (enableSignOut && !isSignOutValidFormat) {
+    return {
+      isValid: false,
+      isOpenValidFormat: true,
+      isCloseValidFormat: true,
+      isSignOutValidFormat: false,
+      isOrderValid: true,
+      errorMessage: 'Sign-Out Time must follow standard 24-hour time format (HH:mm, e.g. 17:00).',
+      openMinutes,
+      closeMinutes,
+      signOutMinutes,
+      durationMinutes: closeMinutes - openMinutes,
+      formattedOpen,
+      formattedClose,
+      formattedSignOut,
     };
   }
 
@@ -150,13 +167,15 @@ export const validateAttendanceWindow = (
     isValid: true,
     isOpenValidFormat: true,
     isCloseValidFormat: true,
-    isSyncValidFormat: true,
+    isSignOutValidFormat: true,
     isOrderValid: true,
     errorMessage: null,
     openMinutes,
     closeMinutes,
+    signOutMinutes,
     durationMinutes: closeMinutes - openMinutes,
     formattedOpen,
     formattedClose,
+    formattedSignOut,
   };
 };

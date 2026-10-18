@@ -317,3 +317,113 @@
   border-color: #93C5FD;
   color: #2563EB;
 }
+
+/* Policy Toggles & Option Cards */
+.policyTogglesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.toggleCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: var(--bg-surface-subtle, #F8FAFC);
+  border: 1.5px solid var(--border-subtle, #E2E8F0);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+
+.toggleCard:hover {
+  border-color: var(--border-strong, #CBD5E1);
+}
+
+.toggleCardActive {
+  background-color: #EFF6FF;
+  border-color: #93C5FD;
+}
+
+.toggleCardInfo {
+  flex: 1;
+}
+
+.toggleCardTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-heading, #0F172A);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toggleCardDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748B);
+  line-height: 1.45;
+}
+
+.toggleTag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.tagAmber {
+  background-color: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.tagBlue {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #93C5FD;
+}
+
+.tagSlate {
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.toggleSwitch {
+  width: 44px;
+  height: 24px;
+  background-color: #CBD5E1;
+  border-radius: 999px;
+  position: relative;
+  transition: background-color 200ms ease;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.toggleSwitchChecked {
+  background-color: #2563EB;
+}
+
+.toggleThumb {
+  width: 18px;
+  height: 18px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 200ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleSwitchChecked .toggleThumb {
+  transform: translateX(20px);
+}
+

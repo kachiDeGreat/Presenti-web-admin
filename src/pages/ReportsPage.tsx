@@ -658,17 +658,60 @@ export const ReportsPage: React.FC = () => {
 
                       const isGeo = record.verificationMethod === 'GEO_FALLBACK';
 
+                      const isLate = record.status === 'LATE';
+                      const signOutStr =
+                        record.signOutDisplayTime ||
+                        (record.signedOutAt
+                          ? new Date(record.signedOutAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : null);
+
                       return (
                         <td key={sd.dateStr} className={styles.matrixCellTd}>
                           <div
                             className={`${styles.cellPresentCard} ${isGeo ? styles.cellPresentGps : styles.cellPresentWifi}`}
-                            title={`Verified at ${timeStr} via ${isGeo ? 'Authorized Geofence Satellite Radius' : 'Premises Wi-Fi Hardware Anchor'}`}
+                            style={isLate ? { borderColor: '#F59E0B', backgroundColor: '#FFFBEB' } : undefined}
+                            title={`Verified at ${timeStr} (${isLate ? 'LATE' : 'ON-TIME'})${signOutStr ? ` • Departed at ${signOutStr}` : ''} via ${isGeo ? 'Authorized Geofence Satellite Radius' : 'Premises Wi-Fi Hardware Anchor'}`}
                           >
-                            <span className={styles.cellPresentTime}>{timeStr}</span>
-                            <span className={isGeo ? styles.methodTagGps : styles.methodTagWifi}>
-                              {isGeo ? <Radio size={10} /> : <ShieldCheck size={10} />}
-                              <span>{isGeo ? 'GPS' : 'WI-FI'}</span>
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                              <span className={styles.cellPresentTime} style={isLate ? { color: '#B45309' } : undefined}>
+                                {timeStr}
+                              </span>
+                              {isLate && (
+                                <span
+                                  style={{
+                                    fontSize: '0.625rem',
+                                    fontWeight: 700,
+                                    color: '#B45309',
+                                    backgroundColor: '#FEF3C7',
+                                    padding: '1px 3px',
+                                    borderRadius: 3,
+                                  }}
+                                >
+                                  LATE
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                              <span className={isGeo ? styles.methodTagGps : styles.methodTagWifi}>
+                                {isGeo ? <Radio size={10} /> : <ShieldCheck size={10} />}
+                                <span>{isGeo ? 'GPS' : 'WI-FI'}</span>
+                              </span>
+                              {signOutStr && (
+                                <span
+                                  style={{
+                                    fontSize: '0.625rem',
+                                    fontWeight: 600,
+                                    color: '#2563EB',
+                                  }}
+                                  title={`Sign-out: ${signOutStr}`}
+                                >
+                                  Out {signOutStr}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                       );
