@@ -42,12 +42,6 @@ export const DashboardPage: React.FC = () => {
   const lateCount = attendance.filter((a) => a.status === "LATE").length;
   const signedOutCount = attendance.filter((a) => !!a.signedOutAt).length;
 
-  const wifiVerifiedCount = attendance.filter(
-    (a) => a.verificationMethod === "WIFI_BSSID",
-  ).length;
-  const geoVerifiedCount = attendance.filter(
-    (a) => a.verificationMethod === "GEO_FALLBACK",
-  ).length;
   const activeDepartments = Array.from(
     new Set(attendance.map((a) => a.department)),
   ).length;

@@ -236,7 +236,7 @@ export const SetupPage: React.FC = () => {
       };
       const perDayVal = validateDaySchedules(serviceDays, daySchedules, defaultSched);
       if (!perDayVal.isValid) {
-        setError(perDayVal.firstError);
+        setError(perDayVal.firstError || null);
         toast.error(perDayVal.firstError || "Please correct day-specific schedule times.");
         return;
       }
@@ -764,7 +764,7 @@ export const SetupPage: React.FC = () => {
                           >
                             <span>{dayObj?.name || `Day ${d}`}</span>
                             <span className={styles.dayTabHoursBadge}>
-                              {format12Hour(sched.arrivalCutoff)} - {format12Hour(sched.lateTolerance)}
+                              {format12Hour(sched.arrivalCutoff || "07:00")} - {format12Hour(sched.lateTolerance || "07:30")}
                             </span>
                           </button>
                         );
@@ -777,8 +777,8 @@ export const SetupPage: React.FC = () => {
                     const activeSched = getActiveDaySchedule(activeScheduleDay);
                     const activeDayObj = DAYS_OF_WEEK.find((w) => w.id === activeScheduleDay);
                     const dayVal = validateAttendanceWindow(
-                      activeSched.arrivalCutoff,
-                      activeSched.lateTolerance,
+                      activeSched.arrivalCutoff || "07:00",
+                      activeSched.lateTolerance || "07:30",
                       activeSched.enableSignOut,
                       activeSched.signOutTime,
                     );
@@ -1031,7 +1031,7 @@ export const SetupPage: React.FC = () => {
                             {dayObj?.label} {activeScheduleDay === d && "• Editing"}
                           </div>
                           <div className={styles.dayOverviewTime}>
-                            {format12Hour(isOpen)} - {format12Hour(isClose)}
+                            {format12Hour(isOpen || "07:00")} - {format12Hour(isClose || "07:30")}
                           </div>
                           <div className={styles.dayOverviewDetails}>
                             {sched.allowLateSignIn ? "Late tag allowed" : "Strict cutoff"}
