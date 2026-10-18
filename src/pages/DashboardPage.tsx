@@ -7,12 +7,13 @@ import {
   ArrowUpRight,
   Radio,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import {
   subscribeToAttendance,
-  clearAllAttendance,
+  clearAllAttendanceInFirestore,
 } from "../services/dataService";
 import type { AttendanceRecord } from "../types";
 import styles from "./DashboardPage.module.css";
@@ -25,6 +26,7 @@ export const DashboardPage: React.FC = () => {
     "ALL" | "WIFI_BSSID" | "GEO_FALLBACK"
   >("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isClearing, setIsClearing] = useState<boolean>(false);
 
   useEffect(() => {
     if (!church?.id) return;
@@ -101,10 +103,24 @@ export const DashboardPage: React.FC = () => {
     return { label: `+${hrs}h ${mins % 60}m (Buffer)`, isDelayed: true };
   };
 
-  const handleClearFeed = () => {
-    clearAllAttendance();
-    setAttendance([]);
-    toast.success("All attendance records cleared.");
+  const handleClearFeed = async () => {
+    if (!church?.id || isClearing) return;
+    const confirmClear = window.confirm(
+      "Are you sure you want to clear all attendance records? This will permanently delete them from the live feed and the backend database."
+    );
+    if (!confirmClear) return;
+
+    setIsClearing(true);
+    try {
+      await clearAllAttendanceInFirestore(church.id);
+      setAttendance([]);
+      toast.success("All attendance records permanently cleared from database.");
+    } catch (err: unknown) {
+      console.error("Failed to clear attendance from Firestore:", err);
+      toast.error("Failed to clear attendance records from database.");
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const todayFormatted = new Date().toLocaleDateString("en-US", {
@@ -158,11 +174,16 @@ export const DashboardPage: React.FC = () => {
             <button
               type="button"
               onClick={handleClearFeed}
+              disabled={isClearing}
               className={styles.clearFeedBtn}
-              title="Clear all displayed attendance records"
+              title="Permanently clear all attendance records from database"
             >
-              <Trash2 size={14} />
-              <span>Clear Feed</span>
+              {isClearing ? (
+                <Loader2 size={14} className={styles.spinner} />
+              ) : (
+                <Trash2 size={14} />
+              )}
+              <span>{isClearing ? "Clearing Feed..." : "Clear Feed"}</span>
             </button>
           )}
         </div>

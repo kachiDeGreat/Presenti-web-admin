@@ -227,10 +227,28 @@
   transition: all 0.15s ease;
 }
 
-.clearFeedBtn:hover {
+.clearFeedBtn:hover:not(:disabled) {
   background-color: #FEF2F2;
   border-color: #FECACA;
   color: #DC2626;
+}
+
+.clearFeedBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Feed Section */

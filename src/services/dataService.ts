@@ -7,6 +7,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  writeBatch,
   onSnapshot,
   query,
   where,
@@ -221,6 +222,31 @@ export const clearAllAttendance = (): void => {
     localStorage.setItem(STORAGE_ATTENDANCE, JSON.stringify([]));
   } catch {
     // ignore
+  }
+};
+
+export const clearAllAttendanceInFirestore = async (churchId: string): Promise<void> => {
+  clearAllAttendance();
+
+  if (isFirebaseConfigured && db && churchId) {
+    try {
+      const attendanceRef = collection(db, 'churches', churchId, 'attendance');
+      const snap = await getDocs(attendanceRef);
+      if (!snap.empty) {
+        const docs = snap.docs;
+        for (let i = 0; i < docs.length; i += 400) {
+          const batch = writeBatch(db);
+          const chunk = docs.slice(i, i + 400);
+          chunk.forEach((d) => {
+            batch.delete(d.ref);
+          });
+          await batch.commit();
+        }
+      }
+    } catch (err) {
+      console.error('Error clearing attendance records from Firestore:', err);
+      throw err;
+    }
   }
 };
 
@@ -567,7 +593,8 @@ export const subscribeToAttendance = (
             id: docSnap.id,
             ...(docSnap.data() as Omit<AttendanceRecord, 'id'>),
           }));
-          callback(list.length > 0 ? list : getStoredAttendance());
+          saveStoredAttendance(list);
+          callback(list);
         },
         (error) => {
           console.warn('Firestore subscription error, using stored records:', error);
