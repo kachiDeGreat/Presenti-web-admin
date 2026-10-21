@@ -1,7 +1,14 @@
+/* ==========================================================================
+   ARTCRAFT DESIGN SYSTEM: MEMBERS DIRECTORY (design.md)
+   ========================================================================== */
+
 .pageContainer {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .headerSection {
@@ -21,15 +28,19 @@
 }
 
 .headerTitle {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-heading);
-  letter-spacing: -0.02em;
+  letter-spacing: -1.08px;
+  line-height: 1.1;
 }
 
 .headerSubtitle {
+  font-family: var(--font-sans);
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .headerActions {
@@ -43,20 +54,22 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 0px !important;
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid rgba(20, 39, 72, 0.4);
   color: var(--text-heading);
-  font-size: 0.825rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .codeButton:hover {
-  background-color: var(--bg-surface-subtle);
-  border-color: var(--brand-accent);
-  color: var(--brand-accent);
+  background-color: var(--bg-surface-hover);
+  border-color: var(--brand-primary);
 }
 
 .codeButton code {
@@ -65,92 +78,102 @@
   color: var(--brand-accent);
 }
 
-/* Mature KPI Summary Cards (Minimalist Typography, No Icon Boxes) */
+/* Mature KPI Summary Cards */
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-md);
+  gap: 16px;
 }
 
 .metricCard {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-lg);
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  box-shadow: none;
+  transition: border-color var(--transition-fast);
+}
+
+.metricCard:hover {
+  border-color: var(--border-medium);
 }
 
 .metricLabel {
-  font-size: 0.725rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .metricValue {
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--text-heading);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -1px;
 }
 
 .metricHint {
-  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.775rem;
   color: var(--text-muted);
 }
 
 /* Department Filtering Row */
 .deptChipsScroll {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 
 .deptChip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  border-radius: 0px !important;
   border: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
-  color: var(--text-body);
-  font-size: 0.8rem;
-  font-weight: 500;
+  color: var(--text-heading);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
   transition: all var(--transition-fast);
 }
 
 .deptChip:hover {
-  border-color: var(--border-strong);
-  background-color: var(--bg-surface-subtle);
+  border-color: var(--border-medium);
+  background-color: var(--bg-surface-hover);
 }
 
 .deptChipActive {
-  background-color: var(--brand-primary);
-  border-color: var(--brand-primary);
-  color: #FFFFFF;
-  font-weight: 600;
+  background-color: #142748 !important;
+  border-color: #142748 !important;
+  color: #f2f1ee !important;
 }
 
 .deptChipBadge {
-  font-size: 0.7rem;
-  padding: 0 5px;
-  border-radius: var(--radius-xs);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 0px;
   background-color: var(--bg-surface-subtle);
   color: var(--text-muted);
 }
 
 .deptChipActive .deptChipBadge {
-  background-color: rgba(255, 255, 255, 0.18);
-  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 /* Clean Data Table */
@@ -159,17 +182,18 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px var(--space-lg);
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border-subtle);
   gap: var(--space-md);
   flex-wrap: wrap;
+  background-color: var(--bg-surface-warm);
 }
 
 .searchInputWrapper {
@@ -182,7 +206,7 @@
 .searchIcon {
   position: absolute;
   left: 12px;
-  color: var(--text-muted);
+  color: var(--text-dim);
   pointer-events: none;
 }
 
@@ -191,12 +215,22 @@
   height: 38px !important;
   font-size: 0.85rem !important;
   width: 100%;
+  border-radius: 0px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background-color: #ffffff !important;
+}
+
+.searchInput:focus {
+  border-color: var(--brand-accent) !important;
+  box-shadow: 0 0 0 2px rgba(45, 129, 255, 0.15) !important;
 }
 
 .toolbarCount {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .memberNameCol {
@@ -212,20 +246,25 @@
 }
 
 .memberEmail {
-  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.775rem;
   color: var(--text-muted);
 }
 
 .deviceMono {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--text-body);
+  font-size: 0.8rem;
+  color: var(--text-heading);
+  letter-spacing: 0.02em;
 }
 
 .deviceUnbound {
-  font-size: 0.78rem;
-  color: #D97706;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--status-warning-text);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .actionsCell {
@@ -239,8 +278,11 @@
   background: none;
   border: none;
   color: var(--brand-accent);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
   padding: 0;
   transition: color var(--transition-fast);
@@ -254,19 +296,21 @@
 .textActionDanger {
   background: none;
   border: 1px solid transparent;
-  color: #dc2626;
-  font-size: 0.8rem;
-  font-weight: 600;
+  color: var(--status-danger-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 0px;
   transition: all var(--transition-fast);
 }
 
 .textActionDanger:hover {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #b91c1c;
+  background-color: var(--status-danger-bg);
+  border-color: var(--status-danger-border);
 }
 
 .emptyState {
@@ -279,16 +323,18 @@
 }
 
 .emptyTitle {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text-heading);
 }
 
 .emptyDesc {
+  font-family: var(--font-sans);
   font-size: 0.825rem;
   color: var(--text-muted);
   max-width: 440px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {

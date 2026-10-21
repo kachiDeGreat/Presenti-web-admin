@@ -136,6 +136,7 @@ export const MembersPage: React.FC = () => {
       {/* Mature Executive Header */}
       <div className={styles.headerSection}>
         <div className={styles.headerTitleWrapper}>
+          <div className="section-tag">// WORKFORCE REGISTRY & ROSTER</div>
           <h1 className={styles.headerTitle}>Organization Registered Users</h1>
           <p className={styles.headerSubtitle}>
             Enrolled workforce directory and mobile device hardware credentials for{' '}

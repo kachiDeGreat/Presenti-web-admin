@@ -291,11 +291,14 @@ export const SetupPage: React.FC = () => {
     <form onSubmit={handleSave} className={styles.pageContainer}>
       <div className={styles.headerSection}>
         <div>
+          <div className="section-tag" style={{ marginBottom: "6px" }}>
+            // WORKSPACE POLICY & TIME-FENCING
+          </div>
           <h1 className={styles.headerTitle}>
             Organization Onboarding & Policy
           </h1>
           <p className={styles.headerSubtitle}>
-            Configure your ecclesiastical branch identity, workforce units, and
+            Configure your organization branch identity, workforce units, and
             time-fenced arrival policies.
           </p>
         </div>
@@ -1021,8 +1024,8 @@ export const SetupPage: React.FC = () => {
                           key={d}
                           className={styles.dayOverviewCard}
                           style={{
-                            borderColor: activeScheduleDay === d ? "#2563EB" : undefined,
-                            backgroundColor: activeScheduleDay === d ? "#EFF6FF" : undefined,
+                            borderColor: activeScheduleDay === d ? "var(--brand-primary)" : undefined,
+                            backgroundColor: activeScheduleDay === d ? "var(--bg-surface-warm)" : undefined,
                             cursor: "pointer",
                           }}
                           onClick={() => setActiveScheduleDay(d)}
@@ -1060,6 +1063,8 @@ export const SetupPage: React.FC = () => {
           disabled={isSubmitDisabled}
           className="btn btn-primary"
           style={{
+            minWidth: "199px",
+            height: "48px",
             opacity: isSubmitDisabled ? 0.6 : 1,
             cursor: isSubmitDisabled ? "not-allowed" : "pointer",
           }}
@@ -1072,53 +1077,16 @@ export const SetupPage: React.FC = () => {
       </div>
 
       {/* Danger Zone: Workspace Reset & Re-onboarding */}
-      <div
-        style={{
-          marginTop: "2.5rem",
-          padding: "1.5rem",
-          backgroundColor: "#FFF1F2",
-          border: "1px solid #FECDD3",
-          borderRadius: "12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.25rem",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              backgroundColor: "#FFE4E6",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#E11D48",
-              flexShrink: 0,
-            }}
-          >
-            <Trash2 size={20} />
+      <div className={styles.dangerZoneCard}>
+        <div className={styles.dangerZoneHeader}>
+          <div className={styles.dangerIcon}>
+            <Trash2 size={18} />
           </div>
           <div>
-            <h4
-              style={{
-                margin: 0,
-                fontSize: "1rem",
-                fontWeight: 700,
-                color: "#9F1239",
-              }}
-            >
+            <h4 className={styles.dangerTitle}>
               Danger Zone: Reset Organization Workspace
             </h4>
-            <p
-              style={{
-                margin: "3px 0 0",
-                fontSize: "0.825rem",
-                color: "#BE123C",
-                lineHeight: 1.4,
-              }}
-            >
+            <p className={styles.dangerDesc}>
               Permanently wipe this workspace from Firestore, purge all cached members and attendance records from this browser, and restart the onboarding process from scratch.
             </p>
           </div>
@@ -1146,23 +1114,13 @@ export const SetupPage: React.FC = () => {
               }
             }}
             disabled={isResettingWorkspace}
+            className="btn btn-danger"
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 18px",
-              backgroundColor: "#E11D48",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              cursor: isResettingWorkspace ? "not-allowed" : "pointer",
               opacity: isResettingWorkspace ? 0.7 : 1,
-              transition: "background-color 0.15s ease",
+              cursor: isResettingWorkspace ? "not-allowed" : "pointer",
             }}
           >
-            <RotateCcw size={16} />
+            <RotateCcw size={15} />
             <span>
               {isResettingWorkspace
                 ? "Resetting Workspace..."

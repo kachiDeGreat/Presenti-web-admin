@@ -392,6 +392,7 @@ export const ReportsPage: React.FC = () => {
       {/* Header & Export Actions */}
       <div className={styles.headerSection}>
         <div className={styles.headerTitleWrapper}>
+          <div className="section-tag">// COMPLIANCE MATRIX & AUDIT LOGS</div>
           <div className={styles.titleBadgeRow}>
             <h1>Monthly Audit Matrix & Export Engine</h1>
             <span className={styles.liveSyncBadge} title="Connected to cloud Firestore">

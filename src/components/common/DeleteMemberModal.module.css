@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.7);
+  background-color: rgba(20, 39, 72, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -14,11 +14,11 @@
 
 .modalCard {
   background-color: #ffffff;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 16px 40px rgba(20, 39, 72, 0.2);
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
   animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px 24px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .headerLeft {
@@ -38,46 +38,48 @@
 }
 
 .iconCircle {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  width: 36px;
+  height: 36px;
+  border-radius: 0px;
+  background-color: var(--status-danger-bg);
+  border: 1px solid var(--status-danger-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #dc2626;
+  color: var(--status-danger-text);
 }
 
 .headerTitles h3 {
   margin: 0;
+  font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-heading);
 }
 
 .headerTitles p {
   margin: 2px 0 0 0;
+  font-family: var(--font-sans);
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .closeButton {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--text-muted);
   padding: 6px;
-  border-radius: 8px;
+  border-radius: 0px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .closeButton:hover:not(:disabled) {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-heading);
 }
 
 .closeButton:disabled {
@@ -93,9 +95,9 @@
 }
 
 .warningBanner {
-  background-color: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 10px;
+  background-color: var(--status-danger-bg);
+  border: 1px solid var(--status-danger-border);
+  border-radius: 0px;
   padding: 14px 16px;
   display: flex;
   align-items: flex-start;
@@ -103,30 +105,34 @@
 }
 
 .warningIcon {
-  color: #e11d48;
+  color: var(--status-danger-text);
   flex-shrink: 0;
   margin-top: 1px;
 }
 
 .warningContent strong {
   display: block;
-  font-size: 0.85rem;
-  color: #9f1239;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--status-danger-text);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   margin-bottom: 2px;
 }
 
 .warningContent p {
   margin: 0;
+  font-family: var(--font-sans);
   font-size: 0.8rem;
-  color: #be123c;
+  color: var(--status-danger-text);
   line-height: 1.4;
 }
 
 .memberCard {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background-color: var(--bg-surface-warm);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -140,24 +146,25 @@
 }
 
 .avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 0px;
   object-fit: cover;
-  border: 1.5px solid #cbd5e1;
+  border: 1px solid var(--border-subtle);
 }
 
 .avatarFallback {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background-color: #0f2042;
-  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 0px;
+  background-color: #142748;
+  color: #f2f1ee;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .memberInfo {
@@ -167,12 +174,13 @@
 .memberName {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-heading);
 }
 
 .memberEmail {
+  font-family: var(--font-sans);
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin-top: 1px;
 }
 
@@ -181,7 +189,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   padding-top: 8px;
-  border-top: 1px dashed #cbd5e1;
+  border-top: 1px dashed var(--border-subtle);
 }
 
 .detailItem {
@@ -191,28 +199,29 @@
 }
 
 .detailLabel {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
 }
 
 .detailValue {
   font-size: 0.825rem;
-  color: #1e293b;
+  color: var(--text-heading);
   font-weight: 600;
 }
 
 .detailMono {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  color: #475569;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-heading);
 }
 
 .modalFooter {
-  background-color: #f8fafc;
-  border-top: 1px solid #f1f5f9;
+  background-color: var(--bg-surface-warm);
+  border-top: 1px solid var(--border-subtle);
   padding: 16px 24px;
   display: flex;
   align-items: center;
@@ -221,20 +230,23 @@
 }
 
 .btnCancel {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(20, 39, 72, 0.4);
+  color: var(--text-heading);
   padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: 0px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .btnCancel:hover:not(:disabled) {
-  background-color: #f1f5f9;
-  border-color: #94a3b8;
+  background-color: var(--bg-surface-hover);
+  border-color: var(--brand-primary);
 }
 
 .btnCancel:disabled {
@@ -243,24 +255,27 @@
 }
 
 .btnDanger {
-  background-color: #dc2626;
-  border: 1px solid #b91c1c;
+  background-color: var(--status-danger-text);
+  border: 1px solid var(--status-danger-text);
   color: #ffffff;
   padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: 0px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+  transition: all var(--transition-fast);
+  box-shadow: none;
 }
 
 .btnDanger:hover:not(:disabled) {
   background-color: #b91c1c;
-  border-color: #991b1b;
+  border-color: #b91c1c;
 }
 
 .btnDanger:disabled {
@@ -269,21 +284,11 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes scaleUp {
-  from {
-    transform: scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.97); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

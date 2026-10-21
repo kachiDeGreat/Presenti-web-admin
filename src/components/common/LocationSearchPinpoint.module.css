@@ -33,7 +33,7 @@
 }
 
 .methodTabBtn:hover {
-  color: #0F172A;
+  color: #142748;
   background-color: rgba(255, 255, 255, 0.6);
 }
 
@@ -89,7 +89,7 @@
 .cardTitle {
   font-size: 0.925rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
   letter-spacing: -0.01em;
 }
 
@@ -172,7 +172,7 @@
   padding-bottom: 0 !important;
   font-size: 0.875rem !important;
   font-family: inherit !important;
-  color: #0F172A !important;
+  color: #142748 !important;
   background-color: #F8FAFC !important;
   border: 1.5px solid #CBD5E1 !important;
   border-radius: 9px !important;
@@ -336,7 +336,7 @@
 .suggestionName {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #0F172A;
+  color: #142748;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -404,7 +404,7 @@
   align-items: center;
   gap: 7px;
   font-weight: 600;
-  color: #0F172A;
+  color: #142748;
   overflow: hidden;
 }
 

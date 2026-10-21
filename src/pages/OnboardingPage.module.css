@@ -1,13 +1,13 @@
 .onboardingRoot {
   min-height: 100vh;
-  background-color: #F8FAFC;
+  background-color: var(--bg-page);
   display: flex;
   flex-direction: column;
 }
 
 .onboardingHeader {
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #E2E8F0;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
   padding: 14px 32px;
   display: flex;
   align-items: center;
@@ -21,28 +21,31 @@
 }
 
 .brandLogo {
-  width: 36px;
-  height: 36px;
-  background: #0F2042;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  background: #142748;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #38BDF8;
+  color: #f2f1ee;
 }
 
 .brandName {
-  font-size: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 700;
-  color: #0F172A;
-  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-heading);
 }
 
 .brandBadge {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  color: #64748B;
+  color: var(--text-muted);
   letter-spacing: 0.05em;
 }
 
@@ -50,23 +53,25 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px;
-  background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 9999px;
-  font-size: 0.85rem;
+  padding: 5px 12px;
+  background-color: var(--bg-surface-warm);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-heading);
 }
 
 .userAvatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 0px;
   object-fit: cover;
 }
 
 .mainContent {
   flex: 1;
-  max-width: 780px;
+  max-width: 820px;
   width: 100%;
   margin: 36px auto;
   padding: 0 20px;
@@ -75,13 +80,13 @@
   gap: 24px;
 }
 
-/* Stepper Bar */
+/* Stepper Bar (design.md: 8px radius, flat) */
 .stepperContainer {
-  background-color: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 14px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 16px 24px;
-  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .stepperTrack {
@@ -100,41 +105,41 @@
   border: none;
   text-align: left;
   padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 150ms ease;
+  border-radius: 0px;
+  transition: all var(--transition-fast);
 }
 
 .stepItem:hover {
-  background-color: #F8FAFC;
+  background-color: var(--bg-surface-warm);
 }
 
 .stepNumber {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #F1F5F9;
-  border: 1.5px solid #E2E8F0;
-  color: #64748B;
+  width: 28px;
+  height: 28px;
+  border-radius: 0px;
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 11px;
   flex-shrink: 0;
-  transition: all 150ms ease;
+  transition: all var(--transition-fast);
 }
 
 .stepItemActive .stepNumber {
-  background-color: #2563EB;
-  border-color: #2563EB;
-  color: #FFFFFF;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  background-color: #142748;
+  border-color: #142748;
+  color: #f2f1ee;
 }
 
 .stepItemComplete .stepNumber {
-  background-color: #059669;
-  border-color: #059669;
-  color: #FFFFFF;
+  background-color: var(--status-success-bg);
+  border-color: var(--status-success-border);
+  color: var(--status-success-text);
 }
 
 .stepTitles {
@@ -143,31 +148,32 @@
 }
 
 .stepLabel {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #94A3B8;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
 .stepName {
   font-size: 0.825rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-heading);
 }
 
 .stepItemActive .stepName {
-  color: #0F172A;
+  color: var(--text-heading);
   font-weight: 700;
 }
 
-/* Step Wizard Card */
+/* Step Wizard Card (design.md: 8px radius, no shadow) */
 .wizardCard {
-  background-color: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 36px 40px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 4px 10px -3px rgba(15, 23, 42, 0.02);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -177,21 +183,23 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 18px;
 }
 
 .wizardTitle {
-  font-size: 1.35rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #0F172A;
-  letter-spacing: -0.02em;
+  color: var(--text-heading);
+  letter-spacing: -0.5px;
 }
 
 .wizardSubtitle {
-  color: #64748B;
+  font-family: var(--font-sans);
+  color: var(--text-muted);
   font-size: 0.875rem;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .formSection {
@@ -242,7 +250,7 @@
   border: 1px solid #CBD5E1;
   padding: 0 14px;
   font-size: 0.875rem;
-  color: #0F172A;
+  color: #142748;
   background-color: #FFFFFF;
   transition: all 150ms ease;
   width: 100%;
@@ -514,7 +522,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 0.85rem;
-  color: #0F172A;
+  color: #142748;
 }
 
 .suggestionItem:hover .suggestionMain {
@@ -639,7 +647,7 @@
   border-radius: 9999px;
   font-size: 0.825rem;
   font-weight: 500;
-  color: #0F172A;
+  color: #142748;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -695,7 +703,7 @@
 .dayCardName {
   font-weight: 600;
   font-size: 0.825rem;
-  color: #0F172A;
+  color: #142748;
 }
 
 .dayCardType {
@@ -808,7 +816,7 @@
 .wifiItemSsid {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #0F172A;
+  color: #142748;
 }
 
 .wifiItemBssid {
@@ -902,7 +910,7 @@
   min-width: 85px;
   font-weight: 700;
   font-size: 0.875rem;
-  color: #0F172A;
+  color: #142748;
   background-color: #F1F5F9;
   padding: 4px 10px;
   border-radius: 6px;
@@ -979,7 +987,7 @@
 .modalTitle {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
   margin: 0;
   display: flex;
   align-items: center;
@@ -1008,7 +1016,7 @@
 
 .modalCloseBtn:hover {
   background-color: #F1F5F9;
-  color: #0F172A;
+  color: #142748;
 }
 
 .modalBody {
@@ -1125,7 +1133,7 @@
 .phoneWifiName {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #0F172A;
+  color: #142748;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1174,7 +1182,7 @@
 .anchorCardTitle {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1291,7 +1299,7 @@
 .toggleCardTitle {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #0F172A;
+  color: #142748;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -1333,85 +1341,93 @@
 }
 
 .toggleSwitch {
-  width: 44px;
-  height: 24px;
+  width: 40px;
+  height: 22px;
   background-color: #CBD5E1;
-  border-radius: 999px;
+  border-radius: 0px;
   position: relative;
-  transition: background-color 200ms ease;
+  transition: background-color var(--transition-fast);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .toggleSwitchChecked {
-  background-color: #2563EB;
+  background-color: #142748;
 }
 
 .toggleThumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background-color: #FFFFFF;
-  border-radius: 50%;
+  border-radius: 0px;
   position: absolute;
   top: 3px;
   left: 3px;
-  transition: transform 200ms ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
 }
 
 .toggleSwitchChecked .toggleThumb {
-  transform: translateX(20px);
+  transform: translateX(18px);
+  background-color: #f2f1ee;
 }
 
 /* Schedule Mode Segmented Control */
 .scheduleModeSegment {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
   margin-top: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .scheduleModeBtn {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 14px;
-  background-color: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 10px;
+  padding: 14px 16px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0px;
   cursor: pointer;
   text-align: left;
-  transition: all 150ms ease;
+  transition: all var(--transition-fast);
 }
 
 .scheduleModeBtn:hover {
-  border-color: #CBD5E1;
+  border-color: var(--border-medium);
 }
 
 .scheduleModeBtnActive {
-  background-color: #EFF6FF;
-  border-color: #2563EB;
-  box-shadow: 0 0 0 1px #2563EB;
+  background-color: #142748;
+  border-color: #142748;
+  color: #f2f1ee;
 }
 
 .scheduleModeBtnTitle {
-  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 700;
-  color: #0F172A;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-heading);
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .scheduleModeBtnActive .scheduleModeBtnTitle {
-  color: #1D4ED8;
+  color: #f2f1ee;
 }
 
 .scheduleModeBtnDesc {
-  font-size: 0.775rem;
-  color: #64748B;
-  line-height: 1.35;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.scheduleModeBtnActive .scheduleModeBtnDesc {
+  color: #a0a0ab;
 }
 
 /* Day-Specific Tab Selector */
@@ -1420,7 +1436,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .dayTabBtn {
@@ -1428,40 +1444,42 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background-color: #FFFFFF;
-  border: 1.5px solid #CBD5E1;
-  border-radius: 999px;
-  font-size: 0.825rem;
-  font-weight: 600;
-  color: #334155;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: all var(--transition-fast);
 }
 
 .dayTabBtn:hover {
-  border-color: #94A3B8;
-  /* background-color: #F8FAFC; */
+  border-color: var(--border-medium);
+  color: var(--text-heading);
 }
 
 .dayTabBtnActive {
-  background-color: #0F2042;
-  border-color: #0F2042;
-  color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(15, 32, 66, 0.2);
+  background-color: #142748;
+  border-color: #142748;
+  color: #f2f1ee;
 }
 
 .dayTabHoursBadge {
-  font-size: 0.7rem;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background-color: #F1F5F9;
-  color: #475569;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 0px;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-heading);
   font-weight: 700;
 }
 
 .dayTabBtnActive .dayTabHoursBadge {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 /* Day Editor Container */
@@ -1489,7 +1507,7 @@
 .dayEditorTitle {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1541,7 +1559,7 @@
 .dayOverviewDayName {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
 }
 
 .dayOverviewTime {

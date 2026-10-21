@@ -15,7 +15,7 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          backgroundColor: '#0F172A',
+          backgroundColor: '#142748',
           color: '#FFFFFF',
           gap: 16,
         }}

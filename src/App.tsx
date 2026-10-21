@@ -1,18 +1,18 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
-import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { AppLayout } from './components/layout/AppLayout';
-import { AuthPage } from './pages/AuthPage';
-import { OnboardingPage } from './pages/OnboardingPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { SetupPage } from './pages/SetupPage';
-import { BeaconSettingsPage } from './pages/BeaconSettingsPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { MembersPage } from './pages/MembersPage';
-import { RouteProgressBar } from './components/common/RouteProgressBar';
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AppLayout } from "./components/layout/AppLayout";
+import { AuthPage } from "./pages/AuthPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { SetupPage } from "./pages/SetupPage";
+import { BeaconSettingsPage } from "./pages/BeaconSettingsPage";
+import { ReportsPage } from "./pages/ReportsPage";
+import { MembersPage } from "./pages/MembersPage";
+import { RouteProgressBar } from "./components/common/RouteProgressBar";
 
 export const App: React.FC = () => {
   return (

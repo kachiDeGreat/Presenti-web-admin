@@ -1,87 +1,98 @@
 /* ==========================================================================
-   SANCTUARYPASS DESIGN SYSTEM TOKENS
-   Anti-"Vibe-Coded" Enterprise Visual Specification
+   ARTCRAFT DESIGN SYSTEM TOKENS (Per design.md)
+   Stark Editorial Layout, Mono Action Buttons, Large Display Typography,
+   Soft Off-White Surfaces (#f2f1ee), and Logo Brand Color (#142748).
    ========================================================================== */
 
 :root {
   /* Surfaces & Backgrounds */
-  --bg-page: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --bg-surface-subtle: #F1F5F9;
-  --bg-surface-elevated: #FFFFFF;
-  --bg-surface-hover: #F8FAFC;
+  --bg-page: #f2f1ee;
+  --bg-surface: #ffffff;
+  --bg-surface-warm: #f2f1ee;
+  --bg-surface-subtle: #eae8e3;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-hover: #ece9e3;
 
-  /* Borders & Dividers */
-  --border-subtle: #E2E8F0;
-  --border-strong: #CBD5E1;
-  --border-focus: #2563EB;
+  /* Header & Navigation Chrome */
+  --topbar-bg: #ffffff;
+  --sidebar-bg: #142748;
 
-  /* Typography / Content */
-  --text-heading: #0F172A;
-  --text-body: #334155;
-  --text-muted: #64748B;
-  --text-inverse: #FFFFFF;
-  --text-link: #2563EB;
+  /* Text & Contrast (design.md: primary / text: #142748) */
+  --text-heading: #142748;
+  --text-body: #142748;
+  --text-muted: #57657c;
+  --text-dim: #7f8ba0;
+  --text-inverse: #f2f1ee;
+  --text-link: #2d81ff;
 
-  /* Brand & Accents */
-  --brand-primary: #0F2042;
-  --brand-navy-deep: #0A1428;
-  --brand-navy-light: #1E293B;
-  --brand-accent: #2563EB;
-  --brand-accent-hover: #1D4ED8;
-  --brand-accent-subtle: #EFF6FF;
+  /* Borders & Dividers (design.md: neutral: #e5e7eb) */
+  --border-subtle: #e5e7eb;
+  --border-strong: #142748;
+  --border-medium: rgba(20, 39, 72, 0.32);
+  --border-focus: #2d81ff;
 
-  /* Semantic Indicators (On-time, Late, Alert, Hardware) */
-  --status-success-bg: #ECFDF5;
-  --status-success-border: #A7F3D0;
+  /* Brand & Accents (design.md: primary: #142748, accent: #2d81ff) */
+  --brand-primary: #142748;
+  --brand-navy-deep: #0e1a32;
+  --brand-navy-light: #1c335e;
+  --brand-accent: #2d81ff;
+  --brand-accent-hover: #1b6fe8;
+  --brand-accent-subtle: rgba(45, 129, 255, 0.08);
+  --brand-accent-border: rgba(45, 129, 255, 0.28);
+
+  /* Semantic Indicators */
+  --status-success-bg: #ecfdf5;
+  --status-success-border: #a7f3d0;
   --status-success-text: #059669;
 
-  --status-warning-bg: #FFFBEB;
-  --status-warning-border: #FDE68A;
-  --status-warning-text: #D97706;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-warning-text: #d97706;
 
-  --status-danger-bg: #FEF2F2;
-  --status-danger-border: #FECACA;
-  --status-danger-text: #DC2626;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fecaca;
+  --status-danger-text: #d92d20;
 
-  --status-info-bg: #EFF6FF;
-  --status-info-border: #BFDBFE;
-  --status-info-text: #2563EB;
+  --status-info-bg: #eff6ff;
+  --status-info-border: #bfdbfe;
+  --status-info-text: #2d81ff;
 
-  /* Typography Stacks */
-  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Typography Stacks (design.md) */
+  --font-display: "Archivo", "Archivo Fallback", system-ui, sans-serif;
+  --font-heading: "Archivo", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Spacing Scale */
+  /* Spacing Scale (design.md: xs: 6px, sm: 16px, md: 24px, lg: 32px, xl: 80px) */
   --space-2xs: 4px;
-  --space-xs: 8px;
-  --space-sm: 12px;
-  --space-md: 16px;
-  --space-lg: 20px;
-  --space-xl: 24px;
-  --space-2xl: 32px;
-  --space-3xl: 40px;
-  --space-4xl: 48px;
+  --space-xs: 6px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 40px;
+  --space-2xl: 60px;
+  --space-3xl: 80px;
 
-  /* Radii */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
+  /* Radii (design.md: rounded: none: 0px for buttons, md: 8px for cards) */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* Elevation (Strictly subtle, crisp 1px borders prioritized) */
+  /* Elevation (design.md: Default shadow treatment is none) */
   --shadow-none: none;
-  --shadow-subtle: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-dropdown: 0 4px 12px 0 rgba(15, 23, 42, 0.08);
+  --shadow-subtle: none;
+  --shadow-dropdown: 0 4px 16px rgba(20, 39, 72, 0.1);
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
+  --transition-fast: 120ms ease;
+  --transition-normal: 180ms ease;
 
   /* Layout Constraints */
-  --sidebar-width: 256px;
+  --sidebar-width: 360px;
   --topbar-height: 64px;
   --max-content-width: 1400px;
 }

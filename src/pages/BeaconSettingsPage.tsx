@@ -544,6 +544,7 @@ export const BeaconSettingsPage: React.FC = () => {
       {/* Header Section */}
       <div className={styles.headerSection}>
         <div>
+          <div className="section-tag">// HARDWARE ANCHORS & GEOFENCE TELEMETRY</div>
           <h1 className={styles.headerTitle}>Premises Presence Anchors</h1>
           <p className={styles.headerSubtitle}>
             Calibrate physical premises verification boundaries. Pair with your
@@ -555,7 +556,7 @@ export const BeaconSettingsPage: React.FC = () => {
 
       {/* Dynamic Architecture Callout */}
       <div className={styles.systemArchitectureBanner}>
-        <Radio size={24} color="#2563EB" style={{ flexShrink: 0 }} />
+        <Radio size={20} color="var(--brand-primary)" style={{ flexShrink: 0 }} />
         <div className={styles.systemArchitectureText}>
           {isGeofenceOnly ? (
             <>
@@ -1031,12 +1032,16 @@ export const BeaconSettingsPage: React.FC = () => {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  padding: "6px 16px",
-                  borderRadius: "999px",
-                  backgroundColor: "#E0F2FE",
-                  color: "#0369A1",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
+                  padding: "8px 16px",
+                  borderRadius: "0px",
+                  backgroundColor: "var(--bg-surface-warm)",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--text-heading)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
                 }}
               >
                 <RefreshCw size={14} className="spinner" />

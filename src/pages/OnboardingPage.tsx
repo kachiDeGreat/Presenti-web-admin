@@ -546,8 +546,8 @@ export const OnboardingPage: React.FC = () => {
           lateTolerance,
           allowLateSignIn,
           enableSignOut,
-          signOutTime: enableSignOut ? signOutTime : undefined,
-          daySchedules: scheduleMode === "PER_DAY" ? daySchedules : undefined,
+          signOutTime: enableSignOut ? signOutTime : "17:00",
+          daySchedules: scheduleMode === "PER_DAY" ? daySchedules : {},
         },
       });
 
@@ -638,7 +638,7 @@ export const OnboardingPage: React.FC = () => {
                 {user.displayName?.[0] || "A"}
               </div>
             )}
-            <span style={{ fontWeight: 600, color: "#0F172A" }}>
+            <span style={{ fontWeight: 600, color: "#142748" }}>
               {user.displayName || user.email}
             </span>
           </div>

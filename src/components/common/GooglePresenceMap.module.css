@@ -63,7 +63,7 @@
 }
 
 .engineBtn:hover {
-  color: #0F172A;
+  color: #142748;
   background-color: #F1F5F9;
 }
 
@@ -202,7 +202,7 @@
 .modalTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #0F172A;
+  color: #142748;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -223,7 +223,7 @@
 
 .modalCloseBtn:hover {
   background-color: #E2E8F0;
-  color: #0F172A;
+  color: #142748;
 }
 
 .modalBody {
@@ -269,7 +269,7 @@
 }
 
 .codeSnippet {
-  background-color: #0F172A;
+  background-color: #142748;
   color: #38BDF8;
   font-family: monospace;
   font-size: 0.8rem;

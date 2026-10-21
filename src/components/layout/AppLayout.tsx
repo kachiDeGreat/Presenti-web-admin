@@ -39,7 +39,8 @@ export const AppLayout: React.FC = () => {
     }
   };
 
-  const isGeofenceOnly = church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY";
+  const isGeofenceOnly =
+    church?.beaconConfig?.verificationMode === "GEOFENCE_ONLY";
 
   const isWifiConfigured = Boolean(
     church?.beaconConfig?.ssidHint &&
@@ -49,13 +50,17 @@ export const AppLayout: React.FC = () => {
   );
 
   const isGeoConfigured = Boolean(
-    (church?.isCalibrated || church?.geoFallback?.isCalibrated || church?.geoFallback?.isConfigured) &&
+    (church?.isCalibrated ||
+      church?.geoFallback?.isCalibrated ||
+      church?.geoFallback?.isConfigured) &&
     church?.geoFallback &&
     church.geoFallback.radiusMeters > 0 &&
-    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0)
+    (church.geoFallback.latitude !== 0 || church.geoFallback.longitude !== 0),
   );
 
-  const isFullyConfigured = isGeofenceOnly ? isGeoConfigured : (isWifiConfigured && isGeoConfigured);
+  const isFullyConfigured = isGeofenceOnly
+    ? isGeoConfigured
+    : isWifiConfigured && isGeoConfigured;
 
   return (
     <div className={styles.layoutRoot}>

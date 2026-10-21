@@ -326,10 +326,44 @@ export const purgeLocalWorkspaceData = (churchId?: string): void => {
 };
 
 // Firestore integration methods
+export const cleanFirestoreData = (data: any): any => {
+  if (data === undefined) return null;
+  return JSON.parse(JSON.stringify(data));
+};
+
 export const fetchChurchDoc = async (
   churchId: string,
   userEmail?: string | null
 ): Promise<Church | null> => {
+  // First, check if we have a locally stored church workspace for instant hydration & resilience:
+  let cachedChurch: Church | null = null;
+  const localById = localStorage.getItem(`sanctuary_church_${churchId}`);
+  if (localById) {
+    try {
+      cachedChurch = JSON.parse(localById);
+    } catch {
+      // ignore
+    }
+  }
+  if (!cachedChurch) {
+    const genericLocal = localStorage.getItem('sanctuary_church_data');
+    if (genericLocal) {
+      try {
+        const parsed = JSON.parse(genericLocal);
+        if (
+          parsed &&
+          (parsed.id === churchId ||
+            parsed.adminUids?.includes(churchId) ||
+            (userEmail && parsed.adminEmail?.toLowerCase() === userEmail.toLowerCase()))
+        ) {
+          cachedChurch = parsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   if (isFirebaseConfigured && db) {
     try {
       // 1. Direct document lookup by ID (e.g. churches/{uid})
@@ -381,45 +415,35 @@ export const fetchChurchDoc = async (
         }
       }
 
-      // Firestore was successfully checked and confirms NO church document exists.
-      // Purge any stale localStorage data for this church and return null so the user is routed to /onboarding!
-      purgeLocalWorkspaceData(churchId);
+      // 4. If Firestore returned empty, but we have a valid cached workspace in localStorage:
+      // DO NOT PURGE IT! Restore it and seamlessly sync to Firestore in the background:
+      if (cachedChurch) {
+        console.info('Restoring workspace from local cache and syncing to Firestore...');
+        try {
+          const cleanData = cleanFirestoreData(cachedChurch);
+          await setDoc(doc(db, 'churches', cachedChurch.id), cleanData, { merge: true });
+        } catch (syncErr) {
+          console.warn('Could not re-sync cached workspace to Firestore:', syncErr);
+        }
+        return cachedChurch;
+      }
+
       return null;
     } catch (err: unknown) {
       console.warn(
         'Firestore fetchChurchDoc error (Check Firestore Rules in Firebase Console):',
         err
       );
+      // Fallback to local cache on Firestore error/offline:
+      if (cachedChurch) {
+        return cachedChurch;
+      }
     }
   }
 
-  // 4. Local storage fallback (ONLY for offline or mock mode when Firebase is NOT configured)
-  if (!isFirebaseConfigured) {
-    const local = localStorage.getItem(`sanctuary_church_${churchId}`);
-    if (local) {
-      try {
-        return JSON.parse(local);
-      } catch {
-        // fallback
-      }
-    }
-
-    const genericLocal = localStorage.getItem('sanctuary_church_data');
-    if (genericLocal) {
-      try {
-        const parsed = JSON.parse(genericLocal);
-        if (
-          parsed &&
-          (parsed.id === churchId ||
-            parsed.adminUids?.includes(churchId) ||
-            (userEmail && parsed.adminEmail?.toLowerCase() === userEmail.toLowerCase()))
-        ) {
-          return parsed;
-        }
-      } catch {
-        // fallback
-      }
-    }
+  // Fallback when Firebase is not configured or in offline mode:
+  if (cachedChurch) {
+    return cachedChurch;
   }
 
   return null;
@@ -525,7 +549,8 @@ export const saveChurchDoc = async (church: Church): Promise<void> => {
   if (isFirebaseConfigured && db) {
     try {
       const ref = doc(db, 'churches', church.id);
-      await setDoc(ref, church, { merge: true });
+      const cleanData = cleanFirestoreData(church);
+      await setDoc(ref, cleanData, { merge: true });
 
       // Automatically register administrator role in account_roles
       const cleanEmail = church.adminEmail?.trim().toLowerCase();
@@ -533,12 +558,12 @@ export const saveChurchDoc = async (church: Church): Promise<void> => {
         try {
           await setDoc(
             doc(db, 'account_roles', cleanEmail),
-            {
+            cleanFirestoreData({
               email: cleanEmail,
               role: 'ADMIN',
               churchId: church.id,
               updatedAt: new Date().toISOString(),
-            },
+            }),
             { merge: true }
           );
         } catch {

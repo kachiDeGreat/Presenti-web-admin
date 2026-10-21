@@ -1,7 +1,8 @@
 @import './variables.css';
 
 /* ==========================================================================
-   CSS RESET & BASE STYLES
+   CSS RESET & ARTCRAFT BASE STYLES (design.md)
+   Stark editorial layout, warm off-white surface, high contrast black type.
    ========================================================================== */
 
 *,
@@ -19,9 +20,14 @@ body {
   color: var(--text-body);
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
 }
 
 #root {
@@ -30,26 +36,49 @@ body {
   flex-direction: column;
 }
 
-/* Headings */
+/* Headings (design.md: Archivo display for hero/flagship, Inter for titles) */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
   color: var(--text-heading);
+  font-family: var(--font-heading);
   font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -1.08px;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 1.4rem;
+  letter-spacing: -0.4px;
+  font-weight: 650;
   line-height: 1.25;
 }
 
-h1 { font-size: 1.75rem; letter-spacing: -0.025em; }
-h2 { font-size: 1.35rem; letter-spacing: -0.02em; }
-h3 { font-size: 1.1rem; letter-spacing: -0.015em; }
-h4 { font-size: 0.95rem; }
+h3 {
+  font-size: 1.1rem;
+  letter-spacing: -0.2px;
+  font-weight: 600;
+  line-height: 1.3;
+}
 
-/* Uppercase tracking for metadata & category titles */
+h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Monospace Utility Labels, Counters & Tags (design.md) */
 .meta-label,
 .section-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
 }
 
@@ -62,14 +91,19 @@ table td {
   font-variant-numeric: tabular-nums;
 }
 
-/* Code & BSSID MAC display */
-code, .mono {
+/* Code & BSSID MAC display (design.md: Geist Mono) */
+code,
+.mono {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.825rem;
+  letter-spacing: 0.02em;
 }
 
 /* Form Controls */
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
   font-family: inherit;
   font-size: inherit;
   box-sizing: border-box;
@@ -84,13 +118,13 @@ input[type="time"],
 select,
 textarea {
   width: 100%;
-  height: 44px;
-  padding: 10px 14px;
+  height: 42px;
+  padding: 8px 14px;
   background-color: var(--bg-surface);
-  border: 1.5px solid #CBD5E1;
-  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
   color: var(--text-heading);
-  font-size: 0.925rem;
+  font-size: 0.9rem;
   font-family: var(--font-sans);
   outline: none;
   box-sizing: border-box;
@@ -105,14 +139,14 @@ textarea {
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #94A3B8;
+  border-color: var(--border-medium);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #2563EB;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(45, 129, 255, 0.15);
 }
 
 input:disabled,
@@ -120,72 +154,102 @@ select:disabled,
 textarea:disabled {
   background-color: var(--bg-surface-subtle);
   cursor: not-allowed;
-  color: var(--text-muted);
+  color: var(--text-dim);
+  border-color: var(--border-subtle);
 }
 
-/* Buttons */
+/* Buttons (design.md: square corners, Geist Mono, 11px, 700, 0.04em uppercase, no shadow) */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  font-size: 0.875rem;
+  padding: 10px 18px;
+  border-radius: 0px !important;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  box-shadow: none !important;
 }
 
+/* Primary Button (design.md: bg #142748, text #f2f1ee, square, no shadow) */
 .btn-primary {
   background-color: var(--brand-primary);
   color: var(--text-inverse);
-  border-color: var(--brand-navy-light);
-}
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--brand-navy-deep);
+  border-color: var(--brand-primary);
 }
 
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--brand-navy-light);
+  border-color: var(--brand-navy-light);
+  color: #ffffff;
+}
+
+/* Secondary Button (design.md: bg #f2f1ee, text #142748, border #14274866, square) */
+.btn-secondary {
+  background-color: var(--bg-surface-warm);
+  color: var(--text-heading);
+  border-color: var(--border-medium);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #eae8e3;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* Accent Button (design.md: #2d81ff) */
 .btn-accent {
   background-color: var(--brand-accent);
-  color: var(--text-inverse);
-}
-.btn-accent:hover:not(:disabled) {
-  background-color: var(--brand-accent-hover);
+  color: #ffffff;
+  border-color: var(--brand-accent);
 }
 
-.btn-secondary {
-  background-color: var(--bg-surface);
-  color: var(--text-heading);
-  border-color: var(--border-subtle);
+.btn-accent:hover:not(:disabled) {
+  background-color: var(--brand-accent-hover);
+  border-color: var(--brand-accent-hover);
 }
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--bg-surface-subtle);
-  border-color: var(--border-strong);
+
+/* Danger Button (design.md: #d92d20) */
+.btn-danger {
+  background-color: var(--status-danger-text);
+  color: #ffffff;
+  border-color: var(--status-danger-text);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
 }
 
 .btn-sm {
-  padding: 5px 10px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  font-size: 10px;
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* Semantic Badges / Pills */
+/* Semantic Badges / Chips (design.md: mono utility feel) */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 3px 8px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -225,21 +289,22 @@ textarea:disabled {
   color: var(--text-muted);
 }
 
-/* Surfaces */
+/* Surfaces (design.md: 8px radius, 1px solid #e5e7eb, no shadow) */
 .surface-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-subtle);
+  box-shadow: none;
 }
 
-/* Tables */
+/* Tables (design.md: clean editorial layout) */
 .data-table-container {
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background-color: var(--bg-surface);
+  box-shadow: none;
 }
 
 .data-table {
@@ -251,19 +316,21 @@ textarea:disabled {
 .data-table th {
   background-color: var(--bg-surface-subtle);
   padding: 10px 14px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
   border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
 
 .data-table td {
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-body);
+  font-size: 0.875rem;
 }
 
 .data-table tr:last-child td {
@@ -274,7 +341,7 @@ textarea:disabled {
   background-color: var(--bg-surface-hover);
 }
 
-/* Print Styles: Dedicated Landscape A4 optimization */
+/* Print Styles */
 @media print {
   @page {
     size: A4 landscape;
@@ -282,8 +349,8 @@ textarea:disabled {
   }
 
   body {
-    background-color: #FFFFFF !important;
-    color: #000000 !important;
+    background-color: #ffffff !important;
+    color: #142748 !important;
     font-size: 11pt !important;
   }
 
@@ -302,13 +369,13 @@ textarea:disabled {
 
   .surface-card,
   .data-table-container {
-    border: 1px solid #CBD5E1 !important;
+    border: 1px solid #142748 !important;
     box-shadow: none !important;
   }
 
   .data-table th {
-    background-color: #F1F5F9 !important;
-    color: #0F172A !important;
+    background-color: #eae8e3 !important;
+    color: #142748 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -319,18 +386,18 @@ textarea:disabled {
 }
 
 /* ==========================================================================
-   REACT-TOASTIFY OVERRIDES: EXPANDED SIZE & GOOGLE FONTS (NON-SQUASHED)
+   REACT-TOASTIFY OVERRIDES: ArtCraft Crisp Styling
    ========================================================================== */
 :root {
-  --toastify-toast-width: 580px !important;
-  --toastify-toast-min-height: 64px !important;
+  --toastify-toast-width: 540px !important;
+  --toastify-toast-min-height: 56px !important;
   --toastify-toast-max-height: 900px !important;
   --toastify-font-family: var(--font-sans) !important;
 }
 
 .Toastify__toast-container {
-  width: 580px !important;
-  max-width: min(580px, 94vw) !important;
+  width: 540px !important;
+  max-width: min(540px, 94vw) !important;
   padding: 16px !important;
   box-sizing: border-box !important;
   z-index: 999999 !important;
@@ -345,19 +412,18 @@ textarea:disabled {
 
 .Toastify__toast {
   width: 100% !important;
-  min-width: 480px !important;
-  min-height: 64px !important;
+  min-width: 440px !important;
+  min-height: 56px !important;
   font-family: var(--font-sans) !important;
-  font-size: 0.95rem !important;
+  font-size: 0.9rem !important;
   font-weight: 500 !important;
-  line-height: 1.55 !important;
-  letter-spacing: -0.01em !important;
-  border-radius: 14px !important;
-  padding: 16px 20px !important;
+  line-height: 1.5 !important;
+  border-radius: var(--radius-xs) !important;
+  padding: 14px 18px !important;
   margin-bottom: 12px !important;
-  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.35), 0 6px 16px -2px rgba(15, 23, 42, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(20, 39, 72, 0.15) !important;
   box-sizing: border-box !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid var(--border-subtle) !important;
   display: flex !important;
   align-items: flex-start !important;
   overflow: visible !important;
@@ -377,22 +443,22 @@ textarea:disabled {
 
 .Toastify__toast-body {
   font-family: var(--font-sans) !important;
-  font-size: 0.95rem !important;
+  font-size: 0.9rem !important;
   font-weight: 500 !important;
-  line-height: 1.55 !important;
+  line-height: 1.5 !important;
   padding: 0 !important;
   margin: 0 !important;
   display: flex !important;
   align-items: flex-start !important;
-  gap: 14px !important;
+  gap: 12px !important;
   flex: 1 1 auto !important;
 }
 
 .Toastify__toast-body > div:last-child {
   font-family: var(--font-sans) !important;
-  font-size: 0.95rem !important;
+  font-size: 0.9rem !important;
   font-weight: 500 !important;
-  line-height: 1.55 !important;
+  line-height: 1.5 !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
   white-space: normal !important;
@@ -400,9 +466,9 @@ textarea:disabled {
 }
 
 .Toastify__toast-icon {
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
   margin-top: 2px !important;
   flex-shrink: 0 !important;
 }
@@ -410,13 +476,13 @@ textarea:disabled {
 .Toastify__close-button {
   align-self: flex-start !important;
   margin-top: 2px !important;
-  margin-left: 14px !important;
-  opacity: 0.8 !important;
+  margin-left: 12px !important;
+  opacity: 0.7 !important;
   padding: 4px !important;
   flex-shrink: 0 !important;
-  transition: opacity 0.2s ease !important;
+  transition: opacity 0.15s ease !important;
 }
+
 .Toastify__close-button:hover {
   opacity: 1 !important;
 }
-

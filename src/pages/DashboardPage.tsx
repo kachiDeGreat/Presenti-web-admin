@@ -160,6 +160,7 @@ export const DashboardPage: React.FC = () => {
       {/* Sleek Header */}
       <div className={styles.headerSection}>
         <div className={styles.headerTitleWrapper}>
+          <div className="section-tag">// REAL-TIME PRESENCE STREAM</div>
           <div className={styles.titleRow}>
             <h1 className={styles.headerTitle}>Live Attendance Feed</h1>
           </div>
