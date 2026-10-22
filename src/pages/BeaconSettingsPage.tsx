@@ -1206,10 +1206,10 @@ export const BeaconSettingsPage: React.FC = () => {
                   <div className={styles.qrStepItem}>
                     <div className={styles.qrStepNumber}>3</div>
                     <div className={styles.qrStepText}>
-                      <h4>Open Admin Command Center → Presence Anchors</h4>
+                      <h4>Go to Anchors Tab → Tap "Scan Code"</h4>
                       <p>
-                        Since you are an Administrator, your mobile home screen displays the{" "}
-                        <strong>Admin Command Center</strong>. Tap <strong>Presence Anchors</strong> (or scan this QR code directly using the in-app scanner).
+                        In your mobile app, tap the <strong>Anchors</strong> tab and click the{" "}
+                        <strong>"Scan Code to Calibrate"</strong> button to launch your camera scanner.
                       </p>
                     </div>
                   </div>
@@ -1217,11 +1217,11 @@ export const BeaconSettingsPage: React.FC = () => {
                   <div className={styles.qrStepItem}>
                     <div className={styles.qrStepNumber}>4</div>
                     <div className={styles.qrStepText}>
-                      <h4>Perform On-Site Hardware Calibration</h4>
+                      <h4>Point Phone Camera at this QR Code</h4>
                       <p>
                         {selectedMode === "GEOFENCE_ONLY"
-                          ? "Your phone locks exact satellite GPS coordinates and perimeter radius with native device accuracy. Tap 'Save Anchors' — this web portal updates live in real time!"
-                          : "Connect your phone to your premises Wi-Fi router. The phone hardware captures the router BSSID and GPS. Tap 'Save Anchors' — this web portal updates live in real time!"}
+                          ? "Scan this QR code. The mobile calibration window will open to lock satellite GPS coordinates and perimeter radius. Tap 'Save Anchors' — this web dashboard updates automatically in real time!"
+                          : "Scan this QR code. The mobile calibration window will open to scan your premises router BSSID and GPS. Tap 'Save Anchors' — this web dashboard updates automatically in real time!"}
                       </p>
                     </div>
                   </div>
