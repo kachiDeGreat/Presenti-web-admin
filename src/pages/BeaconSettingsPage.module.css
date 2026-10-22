@@ -1675,3 +1675,180 @@
   color: var(--brand-primary);
   border-color: var(--brand-primary);
 }
+
+/* ==========================================================================
+   MOBILE CALIBRATION & RECALIBRATION GUIDE PANEL
+   ========================================================================== */
+.mobileGuideCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-lg);
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.mobileGuideHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.mobileGuideIconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobileGuideTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 4px 0;
+}
+
+.mobileGuideSubtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.guideStepsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-md);
+  margin-top: 4px;
+}
+
+.guideStepBox {
+  background: var(--bg-surface-warm);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-md);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.guideStepNumberBadge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--brand-primary);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guideStepContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guideStepContent h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.guideStepContent p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.guideCredBox {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guideCredRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  gap: 6px;
+}
+
+.guideCredLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.guideCredVal {
+  font-weight: 600;
+  color: var(--text-heading);
+  flex: 1;
+  word-break: break-all;
+}
+
+.guideCredValMono {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--brand-primary);
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.autoSyncNoticeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+.autoSyncDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: #10B981;
+  flex-shrink: 0;
+}
+
+.autoSyncNoticeText {
+  font-size: 0.825rem;
+  color: #1E40AF;
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .mobileGuideHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .guideStepsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
