@@ -1612,3 +1612,66 @@
     transform: rotate(360deg);
   }
 }
+
+.accountCredentialsBox {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background-color: var(--bg-surface-warm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.credLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  min-width: 80px;
+}
+
+.credValue {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--text-heading);
+  flex: 1;
+  word-break: break-all;
+}
+
+.credValueMono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--brand-primary);
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.credCopyBtn {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.credCopyBtn:hover {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}

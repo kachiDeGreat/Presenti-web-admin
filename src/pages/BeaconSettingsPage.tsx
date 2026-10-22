@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Wifi,
   MapPin,
-  Save,
   CheckCircle2,
   AlertTriangle,
   Radio,
@@ -21,14 +20,10 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../config/firebase";
 import { GooglePresenceMap } from "../components/common/GooglePresenceMap";
-import { LocationSearchPinpoint } from "../components/common/LocationSearchPinpoint";
-import { validateCoordinates } from "../utils/formValidation";
 import styles from "./BeaconSettingsPage.module.css";
 
-const RADIUS_OPTIONS = [10, 20, 30, 40, 50, 80, 100];
-
 export const BeaconSettingsPage: React.FC = () => {
-  const { church, updateChurch } = useAuth();
+  const { user, church } = useAuth();
 
   // Synchronous initialization from church context if present
   const isInitiallyCalibrated = Boolean(
@@ -113,96 +108,25 @@ export const BeaconSettingsPage: React.FC = () => {
     };
   }, [church?.id]);
 
-  // Web Geofence direct editing state
-  const [isEditingGeoOnWeb, setIsEditingGeoOnWeb] = useState(false);
-  const [isSavingGeo, setIsSavingGeo] = useState(false);
+  // Clipboard & helper states
   const [copiedMac, setCopiedMac] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  // Direct Web Geofence Update handler
-  const handleSaveGeoOnWeb = async () => {
-    const coordsVal = validateCoordinates(latitude, longitude);
-    if (!coordsVal.isValid) {
-      toast.error(coordsVal.error);
-      return;
-    }
-    setIsSavingGeo(true);
-    try {
-      await updateChurch({
-        geoFallback: {
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          radiusMeters: Number(radiusMeters),
-          isConfigured: true,
-          isCalibrated: true,
-        },
-        isCalibrated: true,
-      });
-      toast.success("Geofence perimeter and coordinates updated successfully!");
-      setIsEditingGeoOnWeb(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update geofence coordinates.");
-    } finally {
-      setIsSavingGeo(false);
-    }
+  const handleCopyEmail = (email: string) => {
+    if (!email) return;
+    navigator.clipboard.writeText(email);
+    setCopiedEmail(true);
+    toast.success("Admin email copied to clipboard!");
+    setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  // Browser Geolocation Pickup with graceful desktop fallback
-  const handleUseCurrentLocation = () => {
-    setIsLocating(true);
-
-    if (!("geolocation" in navigator)) {
-      toast.error("Geolocation API is not supported by your browser.");
-      setIsLocating(false);
-      return;
-    }
-
-    const onLocationSuccess = async (position: GeolocationPosition) => {
-      const lat = parseFloat(position.coords.latitude.toFixed(6));
-      const lng = parseFloat(position.coords.longitude.toFixed(6));
-      setLatitude(lat);
-      setLongitude(lng);
-      setIsLocating(false);
-      toast.success(`Current location locked (${lat}, ${lng})!`);
-
-      try {
-        const { reverseGeocode } = await import("../services/geocodingService");
-        const geo = await reverseGeocode(lat, lng);
-        if (geo?.displayName) {
-          setPinnedLocationName(geo.displayName);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    const tryFetch = (highAccuracy: boolean) => {
-      navigator.geolocation.getCurrentPosition(
-        onLocationSuccess,
-        (err) => {
-          if (highAccuracy && (err.code === 3 || err.code === 2)) {
-            // High accuracy timed out on desktop browser: retry with network/IP geolocation
-            tryFetch(false);
-            return;
-          }
-          console.warn("Geolocation error:", err);
-          const msg =
-            err.code === 1
-              ? "Location access denied. Please grant permission in browser settings."
-              : "Unable to acquire browser location. You can search your address or drag the pin on the map.";
-          toast.error(msg);
-          setIsLocating(false);
-        },
-        {
-          enableHighAccuracy: highAccuracy,
-          timeout: highAccuracy ? 5000 : 15000,
-          maximumAge: 300000,
-        },
-      );
-    };
-
-    tryFetch(true);
+  const handleCopyCode = (code: string) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success("Organization code copied to clipboard!");
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   // Initialize data from church profile
@@ -789,191 +713,101 @@ export const BeaconSettingsPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                {!isEditingGeoOnWeb ? (
-                  <button
-                    type="button"
-                    className={styles.editCardBtn}
-                    onClick={() => setIsEditingGeoOnWeb(true)}
-                    title="Adjust geofence coordinates and radius directly on web"
-                  >
-                    <Edit3 size={13} />
-                    <span>Adjust on Web</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.editCardBtn}
-                    onClick={() => setIsEditingGeoOnWeb(false)}
-                    title="Close inline editor"
-                  >
-                    <span>Close Editor</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={styles.editCardBtn}
+                  onClick={() => handleStartQrSession("GEOFENCE_ONLY")}
+                  title="Calibrate or update geofence coordinates via mobile device"
+                >
+                  <Smartphone size={13} />
+                  <span>Calibrate via Mobile</span>
+                </button>
               </div>
 
-              {isEditingGeoOnWeb ? (
-                /* Inline Web Geofence Editor */
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 4 }}>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                    Search address or pinpoint coordinates directly on the satellite map, then select allowed perimeter radius:
-                  </p>
-
-                  <LocationSearchPinpoint
-                    currentLat={latitude}
-                    currentLng={longitude}
-                    locationLabel={pinnedLocationName}
-                    isLocating={isLocating}
-                    onUseCurrentLocation={handleUseCurrentLocation}
-                    onCoordinatesChange={(lat, lng, label) => {
-                      setLatitude(lat);
-                      setLongitude(lng);
-                      if (label) setPinnedLocationName(label);
-                    }}
-                  />
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
-                      Allowed Geofence Radius: <strong>{radiusMeters}m</strong> ({radiusMeters * 2}m diameter)
-                    </label>
-                    <div className={styles.radiusPillRow}>
-                      {RADIUS_OPTIONS.map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          className={`${styles.radiusPill} ${radiusMeters === r ? styles.radiusPillActive : ""}`}
-                          onClick={() => setRadiusMeters(r)}
-                        >
-                          {r}m
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ borderRadius: 10, overflow: "hidden" }}>
-                    <GooglePresenceMap
-                      latitude={latitude}
-                      longitude={longitude}
-                      radiusMeters={radiusMeters}
-                      locationLabel={
-                        pinnedLocationName ||
-                        church?.branchName ||
-                        church?.churchName
-                      }
-                      onCoordinatesChange={(lat, lng) => {
-                        setLatitude(lat);
-                        setLongitude(lng);
-                      }}
-                      height={220}
-                    />
-                  </div>
-
-                  <div className={styles.geoEditActions}>
-                    <button
-                      type="button"
-                      className={styles.cancelGeoBtn}
-                      onClick={() => setIsEditingGeoOnWeb(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.saveGeoBtn}
-                      disabled={isSavingGeo}
-                      onClick={handleSaveGeoOnWeb}
-                    >
-                      <Save size={15} />
-                      <span>{isSavingGeo ? "Saving..." : "Save Coordinates & Radius"}</span>
-                    </button>
-                  </div>
+              {/* Static Read-Only Overview */}
+              <div className={styles.summaryDataRows}>
+                <div className={styles.summaryDataRow}>
+                  <span className={styles.summaryDataLabel}>
+                    Calibrated Venue
+                  </span>
+                  <span className={styles.summaryDataValue}>
+                    {pinnedLocationName ||
+                      church?.branchName ||
+                      church?.churchName ||
+                      "Premises Boundary"}
+                  </span>
                 </div>
-              ) : (
-                /* Static Read-Only Overview */
-                <>
-                  <div className={styles.summaryDataRows}>
-                    <div className={styles.summaryDataRow}>
-                      <span className={styles.summaryDataLabel}>
-                        Calibrated Venue
-                      </span>
-                      <span className={styles.summaryDataValue}>
-                        {pinnedLocationName ||
-                          church?.branchName ||
-                          church?.churchName ||
-                          "Premises Boundary"}
-                      </span>
-                    </div>
-                    <div className={styles.summaryDataRow}>
-                      <span className={styles.summaryDataLabel}>
-                        Precise Coordinates
-                      </span>
-                      <span className={styles.summaryDataValueMono}>
-                        {isGeoConfigured
-                          ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-                          : "Pending Calibration"}
-                      </span>
-                    </div>
-                    <div className={styles.summaryDataRow}>
-                      <span className={styles.summaryDataLabel}>
-                        Perimeter Boundary
-                      </span>
-                      <span className={styles.summaryDataValue}>
-                        {isGeoConfigured
-                          ? `${radiusMeters}m radius (${radiusMeters * 2}m diameter)`
-                          : "Unconfigured"}
-                      </span>
-                    </div>
-                    <div className={styles.summaryDataRow}>
-                      <span className={styles.summaryDataLabel}>
-                        {isGeofenceOnly ? "Primary Rule" : "Failover Rule"}
-                      </span>
-                      <span
-                        style={{
-                          color: isGeoConfigured ? "#2563EB" : "#D97706",
-                          fontWeight: 700,
-                          fontSize: "0.8rem",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5,
-                        }}
-                      >
-                        {isGeoConfigured ? (
-                          <>
-                            <CheckCircle2 size={14} />
-                            {isGeofenceOnly
-                              ? "Active · Primary Presence Anchor"
-                              : "Active on 3.5s Timeout"}
-                          </>
-                        ) : (
-                          <>
-                            <AlertTriangle size={14} /> Unconfigured · Scan QR
-                          </>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Mini Map Preview */}
-                  <div
+                <div className={styles.summaryDataRow}>
+                  <span className={styles.summaryDataLabel}>
+                    Precise Coordinates
+                  </span>
+                  <span className={styles.summaryDataValueMono}>
+                    {isGeoConfigured
+                      ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                      : "Pending Calibration"}
+                  </span>
+                </div>
+                <div className={styles.summaryDataRow}>
+                  <span className={styles.summaryDataLabel}>
+                    Perimeter Boundary
+                  </span>
+                  <span className={styles.summaryDataValue}>
+                    {isGeoConfigured
+                      ? `${radiusMeters}m radius (${radiusMeters * 2}m diameter)`
+                      : "Unconfigured"}
+                  </span>
+                </div>
+                <div className={styles.summaryDataRow}>
+                  <span className={styles.summaryDataLabel}>
+                    {isGeofenceOnly ? "Primary Rule" : "Failover Rule"}
+                  </span>
+                  <span
                     style={{
-                      marginTop: "4px",
-                      borderRadius: "10px",
-                      overflow: "hidden",
+                      color: isGeoConfigured ? "#2563EB" : "#D97706",
+                      fontWeight: 700,
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
                     }}
                   >
-                    <GooglePresenceMap
-                      latitude={latitude}
-                      longitude={longitude}
-                      radiusMeters={radiusMeters}
-                      locationLabel={
-                        pinnedLocationName ||
-                        church?.branchName ||
-                        church?.churchName
-                      }
-                      height={190}
-                      hideOverlay
-                    />
-                  </div>
-                </>
-              )}
+                    {isGeoConfigured ? (
+                      <>
+                        <CheckCircle2 size={14} />
+                        {isGeofenceOnly
+                          ? "Active · Primary Presence Anchor"
+                          : "Active on 3.5s Timeout"}
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle size={14} /> Unconfigured · Calibrate on Mobile
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Mini Map Preview */}
+              <div
+                style={{
+                  marginTop: "4px",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                }}
+              >
+                <GooglePresenceMap
+                  latitude={latitude}
+                  longitude={longitude}
+                  radiusMeters={radiusMeters}
+                  locationLabel={
+                    pinnedLocationName ||
+                    church?.branchName ||
+                    church?.churchName
+                  }
+                  height={190}
+                  hideOverlay
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1316,20 +1150,15 @@ export const BeaconSettingsPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* 3 Step Guide */}
+                {/* 4 Step Mobile Calibration Guide */}
                 <div className={styles.qrStepsGuide}>
                   <div className={styles.qrStepItem}>
                     <div className={styles.qrStepNumber}>1</div>
                     <div className={styles.qrStepText}>
-                      <h4>
-                        {selectedMode === "GEOFENCE_ONLY"
-                          ? "On Your Mobile Phone: Turn ON Location (GPS)"
-                          : "On Your Mobile Phone: Turn ON Wi-Fi & GPS"}
-                      </h4>
+                      <h4>Download &amp; Open Presenti Mobile App</h4>
                       <p>
-                        {selectedMode === "GEOFENCE_ONLY"
-                          ? "Ensure your phone's Location (GPS) sensor toggle is ON in quick settings, then open the Presenti app."
-                          : "Ensure your phone is connected to your office Wi-Fi with Location (GPS) turned ON, then open the Presenti app."}
+                        Launch the Presenti app on your Android smartphone. Make sure your phone's{" "}
+                        <strong>Location (GPS)</strong> toggle is turned ON.
                       </p>
                     </div>
                   </div>
@@ -1337,36 +1166,62 @@ export const BeaconSettingsPage: React.FC = () => {
                   <div className={styles.qrStepItem}>
                     <div className={styles.qrStepNumber}>2</div>
                     <div className={styles.qrStepText}>
-                      <h4>Press &amp; Hold the Logo for 5 Seconds</h4>
+                      <h4>Sign In with this Administrator Account</h4>
                       <p>
-                        On the mobile sign-in / welcome screen, press and hold the{" "}
-                        <strong>Presenti Logo</strong> for 5 seconds. The device
-                        will vibrate and instantly launch the{" "}
-                        <strong>Calibration QR Scanner</strong>.
+                        Log in on mobile using the same administrator credentials as this web portal:
                       </p>
-                      <p
-                        style={{
-                          marginTop: 4,
-                          fontSize: "0.8rem",
-                          color: "#64748B",
-                        }}
-                      >
-                        <em>
-                          Secret admin gesture — completely invisible to regular
-                          workers for security.
-                        </em>
-                      </p>
+                      <div className={styles.accountCredentialsBox}>
+                        <div className={styles.credRow}>
+                          <span className={styles.credLabel}>Admin Email:</span>
+                          <span className={styles.credValue}>{user?.email || church?.adminEmail || "Admin Account"}</span>
+                          {(user?.email || church?.adminEmail) && (
+                            <button
+                              type="button"
+                              className={styles.credCopyBtn}
+                              onClick={() => handleCopyEmail(user?.email || church?.adminEmail || "")}
+                              title="Copy Admin Email"
+                            >
+                              {copiedEmail ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
+                            </button>
+                          )}
+                        </div>
+                        <div className={styles.credRow}>
+                          <span className={styles.credLabel}>Org Code:</span>
+                          <span className={styles.credValueMono}>{church?.churchCode || "ORG"}</span>
+                          {church?.churchCode && (
+                            <button
+                              type="button"
+                              className={styles.credCopyBtn}
+                              onClick={() => handleCopyCode(church.churchCode)}
+                              title="Copy Organization Code"
+                            >
+                              {copiedCode ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div className={styles.qrStepItem}>
                     <div className={styles.qrStepNumber}>3</div>
                     <div className={styles.qrStepText}>
-                      <h4>Point Camera at this QR Code</h4>
+                      <h4>Open Admin Command Center → Presence Anchors</h4>
+                      <p>
+                        Since you are an Administrator, your mobile home screen displays the{" "}
+                        <strong>Admin Command Center</strong>. Tap <strong>Presence Anchors</strong> (or scan this QR code directly using the in-app scanner).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={styles.qrStepItem}>
+                    <div className={styles.qrStepNumber}>4</div>
+                    <div className={styles.qrStepText}>
+                      <h4>Perform On-Site Hardware Calibration</h4>
                       <p>
                         {selectedMode === "GEOFENCE_ONLY"
-                          ? "Scan the QR code. Your phone will instantly lock satellite GPS coordinates and allow you to set your premises perimeter!"
-                          : "Scan the QR code. Your phone will detect the office router BSSID from the air waves and acquire high-accuracy GPS coordinates!"}
+                          ? "Your phone locks exact satellite GPS coordinates and perimeter radius with native device accuracy. Tap 'Save Anchors' — this web portal updates live in real time!"
+                          : "Connect your phone to your premises Wi-Fi router. The phone hardware captures the router BSSID and GPS. Tap 'Save Anchors' — this web portal updates live in real time!"}
                       </p>
                     </div>
                   </div>
