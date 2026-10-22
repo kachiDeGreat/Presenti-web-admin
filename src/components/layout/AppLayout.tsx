@@ -11,6 +11,8 @@ import {
   MapPin,
   CheckCircle,
   Copy,
+  Menu,
+  X,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -19,6 +21,12 @@ import styles from "./AppLayout.module.css";
 export const AppLayout: React.FC = () => {
   const { user, church, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = React.useState(false);
+
+  // Close mobile drawer on route change
+  React.useEffect(() => {
+    setIsMobileDrawerOpen(false);
+  }, [navigate]);
 
   if (!loading && user && !church) {
     return <Navigate to="/onboarding" replace />;
@@ -64,14 +72,35 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className={styles.layoutRoot}>
-      {/* Sidebar Navigation */}
-      <aside className={`${styles.sidebar} no-print`}>
+      {/* Mobile Drawer Backdrop */}
+      {isMobileDrawerOpen && (
+        <div
+          className={styles.drawerBackdrop}
+          onClick={() => setIsMobileDrawerOpen(false)}
+          aria-label="Close menu overlay"
+        />
+      )}
+
+      {/* Sidebar Navigation (Desktop Static / Mobile Slide-Out Drawer) */}
+      <aside
+        className={`${styles.sidebar} ${
+          isMobileDrawerOpen ? styles.sidebarOpen : ""
+        } no-print`}
+      >
         <div className={styles.brandHeader}>
           <img
             src="/image/logo.png"
             alt="Presenti"
             className={styles.brandLogoImg}
           />
+          <button
+            type="button"
+            className={styles.sidebarCloseBtn}
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {church && (
@@ -95,6 +124,7 @@ export const AppLayout: React.FC = () => {
         <nav className={styles.navigation}>
           <NavLink
             to="/dashboard"
+            onClick={() => setIsMobileDrawerOpen(false)}
             className={({ isActive }) =>
               isActive
                 ? `${styles.navLink} ${styles.navLinkActive}`
@@ -107,6 +137,7 @@ export const AppLayout: React.FC = () => {
 
           <NavLink
             to="/settings/beacon"
+            onClick={() => setIsMobileDrawerOpen(false)}
             className={({ isActive }) =>
               isActive
                 ? `${styles.navLink} ${styles.navLinkActive}`
@@ -131,6 +162,7 @@ export const AppLayout: React.FC = () => {
 
           <NavLink
             to="/members"
+            onClick={() => setIsMobileDrawerOpen(false)}
             className={({ isActive }) =>
               isActive
                 ? `${styles.navLink} ${styles.navLinkActive}`
@@ -143,6 +175,7 @@ export const AppLayout: React.FC = () => {
 
           <NavLink
             to="/setup"
+            onClick={() => setIsMobileDrawerOpen(false)}
             className={({ isActive }) =>
               isActive
                 ? `${styles.navLink} ${styles.navLinkActive}`
@@ -155,6 +188,7 @@ export const AppLayout: React.FC = () => {
 
           <NavLink
             to="/reports"
+            onClick={() => setIsMobileDrawerOpen(false)}
             className={({ isActive }) =>
               isActive
                 ? `${styles.navLink} ${styles.navLinkActive}`
@@ -238,15 +272,19 @@ export const AppLayout: React.FC = () => {
       <div className={styles.mainWrapper}>
         <header className={`${styles.topbar} no-print`}>
           <div className={styles.topbarLeft}>
+            <button
+              type="button"
+              className={styles.hamburgerBtn}
+              onClick={() => setIsMobileDrawerOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <Menu size={20} />
+            </button>
             <div className={styles.topbarTitle}>
               {church?.branchName ||
                 church?.churchName ||
                 "Attendance Command Center"}
             </div>
-            {/* <div className={`badge badge-success ${styles.topbarStatusPill}`}>
-              <span className={styles.liveDot} />
-              <span>Real-Time Stream Active</span>
-            </div> */}
           </div>
 
           <div className={styles.topbarRight}>

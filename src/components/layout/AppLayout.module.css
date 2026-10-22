@@ -305,21 +305,130 @@
   margin: 0 auto;
 }
 
+.hamburgerBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-heading);
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.hamburgerBtn:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+.sidebarCloseBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #9494a0;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  transition: color var(--transition-fast);
+}
+
+.sidebarCloseBtn:hover {
+  color: #ffffff;
+}
+
+.drawerBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 18, 32, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 900px) {
-  .sidebar {
-    width: 68px;
+  .hamburgerBtn {
+    display: flex;
   }
-  .brandTitles,
-  .churchMetaCard,
-  .adminInfo,
-  .navLink span {
+
+  .sidebarCloseBtn {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .drawerBackdrop {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 285px;
+    max-width: 85vw;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .topbar {
+    padding: 0 var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .topbarTitle {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+  }
+
+  .hardwareAnchorStatus {
     display: none;
   }
-  .navLink {
-    justify-content: center;
-    padding: 12px;
-  }
+
   .contentArea {
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-sm);
   }
 }
+
+@media (max-width: 640px) {
+  .topbarTitle {
+    max-width: 140px;
+    font-size: 0.925rem;
+  }
+
+  .topbarRight {
+    gap: 4px;
+  }
+
+  .topbarCodePill {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .topbarCodeLabel {
+    display: none;
+  }
+
+  .contentArea {
+    padding: var(--space-sm);
+  }
+}
+

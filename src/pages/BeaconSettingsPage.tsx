@@ -1004,6 +1004,46 @@ export const BeaconSettingsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Direct Mobile Calibration Callout */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+              padding: "12px 18px",
+              backgroundColor: "rgba(45, 129, 255, 0.08)",
+              border: "1px solid rgba(45, 129, 255, 0.25)",
+              borderRadius: "var(--radius-xs)",
+              margin: "0 0 20px 0",
+              flexWrap: "wrap",
+            }}
+          >
+            <Smartphone size={20} color="#2563EB" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: "220px" }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  color: "var(--text-heading)",
+                }}
+              >
+                Direct Mobile App Calibration
+              </div>
+              <div
+                style={{
+                  fontSize: "0.78rem",
+                  color: "var(--text-muted)",
+                  lineHeight: 1.4,
+                }}
+              >
+                You can also calibrate hardware anchors directly inside the
+                Presenti Mobile App! Simply log in on your phone with this
+                Administrator account and tap <strong>Presence Anchors</strong>.
+                No QR scan required.
+              </div>
+            </div>
+          </div>
+
           {/* Real-time Substate A: Connected & Calibrating on Device */}
           {calibrationSession.status === "CONNECTED" ? (
             <div className={styles.qrConnectedCard}>
