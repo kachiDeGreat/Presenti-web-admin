@@ -146,21 +146,33 @@
 
 .lockedInputRow {
   display: flex;
-  gap: 8px;
   width: 100%;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface-subtle);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.lockedInputRow:hover {
+  border-color: var(--border-medium);
 }
 
 .lockedCodeInput {
   flex: 1;
-  background-color: var(--bg-surface-subtle) !important;
+  background-color: transparent !important;
   color: var(--text-heading) !important;
-  border: 1px solid var(--border-subtle) !important;
-  cursor: not-allowed !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: text !important;
   font-family: var(--font-mono) !important;
   font-weight: 700 !important;
+  font-size: 0.85rem !important;
   letter-spacing: 0.05em !important;
   user-select: all !important;
-  border-radius: 0px !important;
+  height: 42px !important;
+  padding: 0 14px !important;
 }
 
 .copyCodeBtn {
@@ -170,7 +182,8 @@
   align-items: center;
   gap: 6px;
   background-color: var(--bg-surface);
-  border: 1px solid rgba(20, 39, 72, 0.4);
+  border: none;
+  border-left: 1px solid var(--border-subtle);
   border-radius: 0px;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -184,8 +197,8 @@
 }
 
 .copyCodeBtn:hover {
-  background-color: var(--bg-surface-hover);
-  border-color: var(--brand-primary);
+  background-color: #eae8e3;
+  color: var(--brand-primary);
 }
 
 /* Department Tags (design.md: crisp mono utility styling) */
@@ -730,4 +743,88 @@
   color: var(--text-muted);
   line-height: 1.5;
   margin-top: 2px;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .headerSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .inputsRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .scheduleModeSegment {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .actionsBar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .actionsBar button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .settingsCard {
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+
+  .cardHeader {
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .cardIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cardTitles h3 {
+    font-size: 1rem;
+  }
+
+  .addTagRow {
+    flex-direction: column;
+  }
+
+  .addTagRow button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fieldLabelRow {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .daysGrid {
+    gap: 6px;
+  }
+
+  .dayPill {
+    padding: 8px 10px;
+    font-size: 10px;
+    min-width: 42px;
+  }
+
+  .dangerZoneCard {
+    padding: var(--space-md);
+  }
+
+  .dangerZoneHeader {
+    align-items: flex-start;
+  }
 }

@@ -347,4 +347,24 @@
   .metricsGrid {
     grid-template-columns: 1fr;
   }
+  .headerSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .headerActions {
+    width: 100%;
+  }
+  .headerActions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .searchInputWrapper {
+    min-width: 100%;
+  }
 }

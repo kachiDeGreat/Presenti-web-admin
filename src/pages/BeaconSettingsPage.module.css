@@ -705,7 +705,61 @@
   font-weight: 600;
   color: var(--text-heading);
   text-align: right;
-  word-break: break-all;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 680px) {
+  .collapsedHeaderCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: var(--space-md);
+  }
+
+  .collapsedHeaderLeft {
+    width: 100%;
+  }
+
+  .editMainBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summaryCard {
+    padding: var(--space-md);
+  }
+
+  .summaryCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .summaryCardTitleGroup {
+    width: 100%;
+  }
+
+  .editCardBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summaryDataRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
+  .summaryDataLabel {
+    font-size: 9px;
+  }
+
+  .summaryDataValue {
+    text-align: left;
+    width: 100%;
+  }
 }
 
 .summaryDataValueMono {

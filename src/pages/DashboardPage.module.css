@@ -539,5 +539,35 @@ input[type="text"].searchInput:focus,
   .headerSection {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+  }
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .headerActions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .toolbarLeft {
+    min-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .searchInputWrapper {
+    max-width: 100%;
+  }
+  .statusFilterGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .anchorAlertBar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .anchorActiveBar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
