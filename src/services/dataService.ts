@@ -181,6 +181,25 @@ export const unbindMemberDeviceInFirestore = async (
   unbindMemberDevice(memberId);
 };
 
+export const resetMemberFaceIdInFirestore = async (
+  churchId: string,
+  memberId: string
+): Promise<void> => {
+  if (isFirebaseConfigured && db) {
+    try {
+      const memberDocRef = doc(db, 'churches', churchId, 'members', memberId);
+      await updateDoc(memberDocRef, {
+        faceEmbedding: [],
+        isFaceEnrolled: false,
+        faceEnrolledAt: '',
+      });
+    } catch (err) {
+      console.warn('Error resetting face ID in Firestore:', err);
+      throw err;
+    }
+  }
+};
+
 export const subscribeToMembers = (
   churchId: string,
   callback: (members: ChurchMember[]) => void

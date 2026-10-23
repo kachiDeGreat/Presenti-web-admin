@@ -6,6 +6,7 @@ import {
   subscribeToMembers,
   deleteMemberFromFirestore,
   unbindMemberDeviceInFirestore,
+  resetMemberFaceIdInFirestore,
   getStoredAttendance,
 } from '../services/dataService';
 import { DeleteMemberModal } from '../components/common/DeleteMemberModal';
@@ -102,6 +103,29 @@ export const MembersPage: React.FC = () => {
         toast.success(`Device lock reset for "${member.fullName}".`);
       } catch (err: any) {
         toast.error(err?.message || 'Failed to reset device lock in database.');
+      }
+    }
+  };
+
+  const handleResetFaceID = async (member: ChurchMember) => {
+    if (!church?.id) return;
+    if (
+      window.confirm(
+        `Reset facial biometric profile for "${member.fullName}"? Their next attendance clock-in on mobile will prompt them to enroll their face.`
+      )
+    ) {
+      try {
+        await resetMemberFaceIdInFirestore(church.id, member.id);
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === member.id
+              ? { ...m, isFaceEnrolled: false, faceEmbedding: [] }
+              : m
+          )
+        );
+        toast.success(`Face ID reset for "${member.fullName}".`);
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to reset face ID in database.');
       }
     }
   };
@@ -245,7 +269,8 @@ export const MembersPage: React.FC = () => {
                 <th>Member</th>
                 <th>Department Unit</th>
                 <th>Contact</th>
-                <th>Device Binding</th>
+                <th>Device Hardware</th>
+                <th>Face Biometric</th>
                 <th>Enrolled Date</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
@@ -253,7 +278,7 @@ export const MembersPage: React.FC = () => {
             <tbody>
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <div className={styles.emptyState}>
                       <div className={styles.emptyTitle}>No users found</div>
                       <div className={styles.emptyDesc}>
@@ -267,16 +292,18 @@ export const MembersPage: React.FC = () => {
               ) : (
                 filteredMembers.map((member) => {
                   const isBound = member.boundDeviceId && member.boundDeviceId !== 'UNBOUND';
+                  const isFaceBound = Boolean(member.isFaceEnrolled || (member.faceEmbedding && member.faceEmbedding.length > 0));
+                  const displayAvatar = member.facePhotoURL || member.photoURL;
 
                   return (
                     <tr key={member.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          {member.photoURL ? (
+                          {displayAvatar ? (
                             <img
-                              src={member.photoURL}
+                              src={displayAvatar}
                               alt=""
-                              style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-subtle)' }}
+                              style={{ width: 28, height: 28, borderRadius: 0, objectFit: 'cover', border: '1px solid var(--border-subtle)' }}
                             />
                           ) : null}
                           <div className={styles.memberNameCol}>
@@ -308,6 +335,45 @@ export const MembersPage: React.FC = () => {
                         )}
                       </td>
 
+                      <td>
+                        {isFaceBound ? (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              padding: '2px 8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#059669',
+                              background: '#ECFDF5',
+                              border: '1px solid #A7F3D0',
+                            }}
+                            title="Facial biometric vector bound to account"
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669' }} />
+                            Bound
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              padding: '2px 8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#B45309',
+                              background: '#FEF3C7',
+                              border: '1px solid #FDE68A',
+                            }}
+                            title="Worker has not yet enrolled facial biometrics"
+                          >
+                            Pending
+                          </span>
+                        )}
+                      </td>
+
                       <td style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
                         {new Date(member.registeredAt).toLocaleDateString([], {
                           year: 'numeric',
@@ -326,13 +392,24 @@ export const MembersPage: React.FC = () => {
                           >
                             Reset Device
                           </button>
+                          {isFaceBound && (
+                            <button
+                              type="button"
+                              onClick={() => handleResetFaceID(member)}
+                              className={styles.textActionBtn}
+                              style={{ color: '#0284C7' }}
+                              title="Reset facial biometric profile so user can re-enroll on next clock-in"
+                            >
+                              Reset Face
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleOpenDeleteModal(member)}
                             className={styles.textActionDanger}
                             title="Delete user permanently from organization"
                           >
-                            Delete from Organization
+                            Delete
                           </button>
                         </div>
                       </td>

@@ -74,6 +74,10 @@ export interface ChurchMember {
   department: string;
   boundDeviceId: string;
   registeredAt: string;
+  faceEmbedding?: number[];
+  facePhotoURL?: string;
+  isFaceEnrolled?: boolean;
+  faceEnrolledAt?: string;
 }
 
 export type Organization = Church;
@@ -91,6 +95,12 @@ export interface AttendanceRecord {
   status: AttendanceStatus;
   signedOutAt?: string; // ISO string when signed out
   signOutDisplayTime?: string; // e.g. "05:15:30 PM"
+  faceVerification?: {
+    verified: boolean;
+    confidence: number;
+    method: 'IN_APP_FACE_AI';
+    failureReason?: string;
+  };
 }
 
 export interface UserProfile {
