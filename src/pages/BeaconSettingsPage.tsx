@@ -181,9 +181,7 @@ export const BeaconSettingsPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* ====================================================================
-          TOP HERO COMMAND BAR
-          ==================================================================== */}
+      {/* Top hero command bar */}
       <div className={styles.heroCommandBar}>
         <div className={styles.heroCommandLeft}>
           <div className={styles.heroTagRow}>
@@ -233,9 +231,7 @@ export const BeaconSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ====================================================================
-          4 TELEMETRY METRIC STAT CARDS
-          ==================================================================== */}
+      {/* Telemetry metric cards */}
       <div className={styles.metricsGrid}>
         {/* Card 1: Architecture Mode */}
         <div className={styles.metricCard}>
@@ -322,13 +318,9 @@ export const BeaconSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ====================================================================
-          EXECUTIVE 2-COLUMN WORKSTATION
-          Left: Interactive Presence Radar Console
-          Right: On-Site Mobile Calibration Guide
-          ==================================================================== */}
+      {/* Workstation: radar console and calibration */}
       <div className={styles.workstationLayout}>
-        {/* LEFT COLUMN: PRESENCE RADAR CONSOLE */}
+        {/* Left column: presence radar */}
         <div className={styles.radarConsoleCard}>
           <div className={styles.radarConsoleHeader}>
             <div className={styles.radarTitleGroup}>

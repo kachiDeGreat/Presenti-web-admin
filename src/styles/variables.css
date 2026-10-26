@@ -1,9 +1,4 @@
-/* ==========================================================================
-   ARTCRAFT DESIGN SYSTEM TOKENS (Per design.md)
-   Stark Editorial Layout, Mono Action Buttons, Large Display Typography,
-   Soft Off-White Surfaces (#f2f1ee), and Logo Brand Color (#142748).
-   ========================================================================== */
-
+/* Design system tokens */
 :root {
   /* Surfaces & Backgrounds */
   --bg-page: #f2f1ee;

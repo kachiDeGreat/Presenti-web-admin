@@ -1,7 +1,4 @@
-/* ==========================================================================
-   ARTCRAFT DESIGN SYSTEM: DASHBOARD PAGE (design.md)
-   ========================================================================== */
-
+/* Dashboard page styles */
 .dashboardContainer {
   display: flex;
   flex-direction: column;

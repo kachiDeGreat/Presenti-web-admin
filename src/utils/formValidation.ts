@@ -1,27 +1,7 @@
-/**
- * Comprehensive Enterprise Form Validation Suite
- * Strictly enforces regex verification across all input fields:
- * - Phone numbers (national & international E.164 formats)
- * - Email addresses (RFC 5322 standard)
- * - Organization / Church Codes (alphanumeric uppercase with hyphens)
- * - Names (Organization, Branch, Administrator Full Name, Departments)
- * - Hardware Wi-Fi MAC Address / BSSID (6 hex octets)
- * - Wi-Fi SSID
- * - Geolocation Coordinates (Latitude / Longitude)
- * - Time inputs & Attendance window sequences
- * Prevents users from inputting arbitrary or invalid "anyhow" data.
- */
-
+// Enterprise form validation utilities and regex patterns.
 export * from './timeValidation';
 
-// ---------------------------------------------------------------------------
-// 1. PHONE NUMBER REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
-/**
- * Validates international (e.g. +234 803 123 4567, +1 (555) 234-5678)
- * and national (e.g. 08031234567, 0803 123 4567) phone formats.
- * Must match structural pattern and contain 7 to 15 digits.
- */
+// Phone number validation
 export const PHONE_REGEX = /^\+?[0-9]{1,4}?[-.\s]?\(?[0-9]{1,4}?\)?[-.\s]?[0-9]{1,4}[-.\s]?[0-9]{1,9}$/;
 
 export const validatePhoneNumber = (
@@ -47,13 +27,7 @@ export const validatePhoneNumber = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 2. EMAIL ADDRESS REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
-/**
- * RFC 5322 standard email regex:
- * e.g. admin@graceconsulate.org, user.name@domain.co.uk
- */
+// Email address validation
 export const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 export const validateEmail = (
@@ -72,13 +46,7 @@ export const validateEmail = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 3. ORGANIZATION / CHURCH CODE REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
-/**
- * Uppercase alphanumeric characters with hyphens (e.g. "GC-HQ", "CHURCH-01", "CALABAR-CAT").
- * Min 3 characters, max 25 characters.
- */
+// Organization code validation
 export const CHURCH_CODE_REGEX = /^[A-Z0-9]{2,12}(-[A-Z0-9]{1,10})*$/;
 
 export const validateChurchCode = (
@@ -103,13 +71,7 @@ export const validateChurchCode = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 4. ORGANIZATION NAME REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
-/**
- * Letters, numbers, spaces, and standard enterprise punctuation (&, ., ,, ', -).
- * Must contain at least 2 letters.
- */
+// Organization name validation
 export const ORG_NAME_REGEX = /^[a-zA-Z0-9\s&.,'’\-()]{2,100}$/;
 
 export const validateOrgName = (
@@ -140,9 +102,7 @@ export const validateOrgName = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 5. BRANCH / CATHEDRAL NAME REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
+// Branch name validation
 export const BRANCH_NAME_REGEX = /^[a-zA-Z0-9\s&.,'’\-()]{2,100}$/;
 
 export const validateBranchName = (
@@ -173,13 +133,7 @@ export const validateBranchName = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 6. PERSON FULL NAME REGEX & VALIDATOR (Administrator / Staff)
-// ---------------------------------------------------------------------------
-/**
- * Human full name: letters, spaces, dots, hyphens, and apostrophes.
- * No numbers or symbols allowed.
- */
+// Person name validation
 export const PERSON_NAME_REGEX = /^[a-zA-Z\s.'’\-]{2,70}$/;
 
 export const validatePersonName = (
@@ -204,9 +158,7 @@ export const validatePersonName = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 7. DEPARTMENT / UNIT NAME REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
+// Department name validation
 export const DEPT_NAME_REGEX = /^[a-zA-Z0-9\s&/\-()]{2,60}$/;
 
 export const validateDeptName = (
@@ -237,12 +189,7 @@ export const validateDeptName = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 8. WI-FI HARDWARE BSSID / MAC ADDRESS REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
-/**
- * Matches 6 hex octets with colon or hyphen separators (e.g. 0c:61:f9:65:8f:07 or 0C-61-F9-65-8F-07).
- */
+// Wi-Fi MAC address validation
 export const MAC_ADDRESS_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
 export const validateMacAddress = (
@@ -261,9 +208,7 @@ export const validateMacAddress = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 9. WI-FI ROUTER SSID REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
+// Wi-Fi SSID validation
 export const SSID_REGEX = /^[\x20-\x7E]{1,32}$/;
 
 export const validateSsid = (
@@ -285,9 +230,7 @@ export const validateSsid = (
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------------
-// 10. GEOLOCATION COORDINATES REGEX & VALIDATOR
-// ---------------------------------------------------------------------------
+// Geolocation coordinates validation
 export const LATITUDE_REGEX = /^-?([0-8]?\d(\.\d+)?|90(\.0+)?)$/;
 export const LONGITUDE_REGEX = /^-?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
 

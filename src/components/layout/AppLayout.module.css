@@ -19,6 +19,14 @@
   z-index: 20;
   overflow: hidden;
 }
+.brandTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f2f1ee;
+  margin-left: -12px;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
 
 .brandHeader {
   height: var(--topbar-height);

@@ -89,10 +89,11 @@ export const AppLayout: React.FC = () => {
       >
         <div className={styles.brandHeader}>
           <img
-            src="/image/logo.png"
+            src="/image/app-icon.png"
             alt="Presenti"
             className={styles.brandLogoImg}
           />
+          <span className={styles.brandTitle}>Presenti</span>
           <button
             type="button"
             className={styles.sidebarCloseBtn}

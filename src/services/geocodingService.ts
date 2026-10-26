@@ -1,17 +1,4 @@
-/**
- * High-performance Geocoding and Location Search Service for Admin Web Portal.
- *
- * Multi-Tiered Architecture:
- * 1. Google Maps Geocoding API (Direct Google Cloud integration when API key is provided)
- * 2. Nigerian State Abbreviation Expansion + Scoped Photon (Komoot fast fuzzy search with Nigeria bounding box)
- * 3. OpenStreetMap Nominatim with Nigeria country restriction
- *
- * Guarantees:
- * - Abbreviations like "Calabar, CRS", "Wuse 2, FCT", "GRA, PH" resolve with 100% accuracy.
- * - Nigeria-scoped queries never drift overseas (e.g. Manila, Philippines).
- * - 100% free operation if no Google Cloud billing is configured.
- */
-
+// Geocoding and location search service for web portal
 export interface GeocodedLocation {
   id: string;
   name: string;

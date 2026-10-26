@@ -1,9 +1,4 @@
-/* ==========================================================================
-   ARTCRAFT DESIGN SYSTEM: AUTHENTICATION PAGE (design.md)
-   Stark Editorial Split Layout, Archivo Display Typography,
-   Geist Mono Action Controls, Off-White Base (#f2f1ee), High Contrast (#142748).
-   ========================================================================== */
-
+/* Auth page styles */
 .splitLayout {
   min-height: 100vh;
   display: grid;
@@ -13,9 +8,7 @@
   -webkit-user-select: none;
 }
 
-/* ==========================================================================
-   LEFT PANE: EDITORIAL SIGN-IN
-   ========================================================================== */
+/* Left pane styles */
 .formPane {
   display: flex;
   flex-direction: column;
@@ -179,9 +172,7 @@
   text-align: center;
 }
 
-/* ==========================================================================
-   RIGHT PANE: STARK EDITORIAL SHOWCASE (design.md)
-   ========================================================================== */
+/* Right pane showcase styles */
 .showcasePane {
   background: #142748;
   color: #f2f1ee;

@@ -102,9 +102,7 @@ export const AuthPage: React.FC = () => {
 
   return (
     <div className={styles.splitLayout}>
-      {/* =====================================================================
-          LEFT PANE: CLEAN GOOGLE LOGIN ONLY
-          ===================================================================== */}
+      {/* Left Pane: Google Login */}
       <div className={styles.formPane}>
         {/* Brand Header */}
         <div className={styles.brandHeader}>
@@ -204,9 +202,7 @@ export const AuthPage: React.FC = () => {
         </div>
       </div>
 
-      {/* =====================================================================
-          RIGHT PANE: BLUE SLIDING CAROUSEL
-          ===================================================================== */}
+      {/* Right Pane: Showcase Carousel */}
       <div className={styles.showcasePane}>
         <div className={styles.showcaseTop}>
           {/* <span className={styles.badgePill}>Official Portal</span> */}

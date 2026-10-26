@@ -1,12 +1,4 @@
-/**
- * Time validation utilities using strict regex verification.
- * Enforces business rules:
- * 1. Sign-In Close Time MUST be greater than Sign-In Open Time.
- * 2. If Sign-Out is enabled, Sign-Out Time must be a valid time format.
- * 3. Daily Cloud Sync cutoff is completely removed in favor of automatic backend synchronization.
- */
-
-// Strict 24-hour time regex pattern matching HH:mm (00:00 to 23:59) with optional :ss
+// Time validation utilities and window verification
 export const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
 
 export interface TimeWindowValidationResult {

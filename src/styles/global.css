@@ -1,10 +1,6 @@
 @import './variables.css';
 
-/* ==========================================================================
-   CSS RESET & ARTCRAFT BASE STYLES (design.md)
-   Stark editorial layout, warm off-white surface, high contrast black type.
-   ========================================================================== */
-
+/* Base styles and reset */
 *,
 *::before,
 *::after {
@@ -385,9 +381,7 @@ textarea:disabled {
   }
 }
 
-/* ==========================================================================
-   REACT-TOASTIFY OVERRIDES: ArtCraft Crisp Styling
-   ========================================================================== */
+/* Toast overrides */
 :root {
   --toastify-toast-width: 540px !important;
   --toastify-toast-min-height: 56px !important;

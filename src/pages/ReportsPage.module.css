@@ -1,7 +1,4 @@
-/* ==========================================================================
-   ARTCRAFT DESIGN SYSTEM: REPORTS & AUDIT MATRIX (design.md)
-   ========================================================================== */
-
+/* Reports & audit matrix styles */
 .reportsContainer {
   display: flex;
   flex-direction: column;

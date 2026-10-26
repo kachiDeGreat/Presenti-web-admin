@@ -1,9 +1,4 @@
-/* ==========================================================================
-   ARTCRAFT DESIGN SYSTEM: ORGANIZATION & POLICY PAGE (design.md)
-   Stark Editorial Layout, Geist Mono Action Pills, Archivo Display Typography,
-   Soft Off-White Base (#f2f1ee), and High-Contrast Black Text (#142748).
-   ========================================================================== */
-
+/* Organization & policy page styles */
 .pageContainer {
   display: flex;
   flex-direction: column;

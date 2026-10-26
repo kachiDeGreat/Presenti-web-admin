@@ -1,24 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useMemo } from "react";
+import { Search } from "lucide-react";
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 import {
   subscribeToMembers,
   deleteMemberFromFirestore,
   unbindMemberDeviceInFirestore,
   resetMemberFaceIdInFirestore,
   getStoredAttendance,
-} from '../services/dataService';
-import { DeleteMemberModal } from '../components/common/DeleteMemberModal';
-import type { ChurchMember } from '../types';
-import styles from './MembersPage.module.css';
+} from "../services/dataService";
+import { DeleteMemberModal } from "../components/common/DeleteMemberModal";
+import type { ChurchMember } from "../types";
+import styles from "./MembersPage.module.css";
 
 export const MembersPage: React.FC = () => {
   const { church } = useAuth();
   const [members, setMembers] = useState<ChurchMember[]>([]);
-  const [selectedDept, setSelectedDept] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [memberToDelete, setMemberToDelete] = useState<ChurchMember | null>(null);
+  const [selectedDept, setSelectedDept] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [memberToDelete, setMemberToDelete] = useState<ChurchMember | null>(
+    null,
+  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
@@ -32,13 +34,15 @@ export const MembersPage: React.FC = () => {
   const handleCopyChurchCode = () => {
     if (church?.churchCode) {
       navigator.clipboard.writeText(church.churchCode);
-      toast.success(`Copied Organization Code "${church.churchCode}" to clipboard.`);
+      toast.success(
+        `Copied Organization Code "${church.churchCode}" to clipboard.`,
+      );
     }
   };
 
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
-      const matchDept = selectedDept === 'ALL' || m.department === selectedDept;
+      const matchDept = selectedDept === "ALL" || m.department === selectedDept;
       const q = searchQuery.trim().toLowerCase();
       const matchSearch =
         !q ||
@@ -53,12 +57,14 @@ export const MembersPage: React.FC = () => {
 
   const totalCount = members.length;
   const boundDevicesCount = members.filter(
-    (m) => m.boundDeviceId && m.boundDeviceId !== 'UNBOUND'
+    (m) => m.boundDeviceId && m.boundDeviceId !== "UNBOUND",
   ).length;
 
   const todayCheckedInCount = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const records = getStoredAttendance().filter((a) => a.serviceDate === todayStr);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const records = getStoredAttendance().filter(
+      (a) => a.serviceDate === todayStr,
+    );
     const uniqueIds = new Set(records.map((r) => r.memberId));
     return uniqueIds.size;
   }, [members]);
@@ -67,8 +73,10 @@ export const MembersPage: React.FC = () => {
     if (church?.departments && church.departments.length > 0) {
       return church.departments;
     }
-    const fromMembers = Array.from(new Set(members.map((m) => m.department))).filter(Boolean);
-    return fromMembers.length > 0 ? fromMembers : ['General Workforce'];
+    const fromMembers = Array.from(
+      new Set(members.map((m) => m.department)),
+    ).filter(Boolean);
+    return fromMembers.length > 0 ? fromMembers : ["General Workforce"];
   }, [church?.departments, members]);
 
   const handleOpenDeleteModal = (member: ChurchMember) => {
@@ -81,9 +89,13 @@ export const MembersPage: React.FC = () => {
     try {
       await deleteMemberFromFirestore(church.id, member.id);
       setMembers((prev) => prev.filter((m) => m.id !== member.id));
-      toast.success(`Successfully deleted "${member.fullName}" from organization registry.`);
+      toast.success(
+        `Successfully deleted "${member.fullName}" from organization registry.`,
+      );
     } catch (err: any) {
-      toast.error(err?.message || `Failed to delete "${member.fullName}" from database.`);
+      toast.error(
+        err?.message || `Failed to delete "${member.fullName}" from database.`,
+      );
       throw err;
     }
   };
@@ -92,17 +104,19 @@ export const MembersPage: React.FC = () => {
     if (!church?.id) return;
     if (
       window.confirm(
-        `Reset hardware lock for "${member.fullName}"? Their next mobile sign-in will bind their new device.`
+        `Reset hardware lock for "${member.fullName}"? Their next mobile sign-in will bind their new device.`,
       )
     ) {
       try {
         await unbindMemberDeviceInFirestore(church.id, member.id);
         setMembers((prev) =>
-          prev.map((m) => (m.id === member.id ? { ...m, boundDeviceId: 'UNBOUND' } : m))
+          prev.map((m) =>
+            m.id === member.id ? { ...m, boundDeviceId: "UNBOUND" } : m,
+          ),
         );
         toast.success(`Device lock reset for "${member.fullName}".`);
       } catch (err: any) {
-        toast.error(err?.message || 'Failed to reset device lock in database.');
+        toast.error(err?.message || "Failed to reset device lock in database.");
       }
     }
   };
@@ -111,7 +125,7 @@ export const MembersPage: React.FC = () => {
     if (!church?.id) return;
     if (
       window.confirm(
-        `Reset facial biometric profile for "${member.fullName}"? Their next attendance clock-in on mobile will prompt them to enroll their face.`
+        `Reset facial biometric profile for "${member.fullName}"? Their next attendance clock-in on mobile will prompt them to enroll their face.`,
       )
     ) {
       try {
@@ -120,39 +134,51 @@ export const MembersPage: React.FC = () => {
           prev.map((m) =>
             m.id === member.id
               ? { ...m, isFaceEnrolled: false, faceEmbedding: [] }
-              : m
-          )
+              : m,
+          ),
         );
         toast.success(`Face ID reset for "${member.fullName}".`);
       } catch (err: any) {
-        toast.error(err?.message || 'Failed to reset face ID in database.');
+        toast.error(err?.message || "Failed to reset face ID in database.");
       }
     }
   };
 
   const handleExportCSV = () => {
     if (filteredMembers.length === 0) {
-      toast.warn('No records to export.');
+      toast.warn("No records to export.");
       return;
     }
-    const headers = ['Full Name', 'Department', 'Phone', 'Email', 'Device ID', 'Registered Date'];
+    const headers = [
+      "Full Name",
+      "Department",
+      "Phone",
+      "Email",
+      "Device ID",
+      "Registered Date",
+    ];
     const rows = filteredMembers.map((m) => [
       `"${m.fullName.replace(/"/g, '""')}"`,
       `"${m.department.replace(/"/g, '""')}"`,
       `"${m.phone}"`,
-      `"${m.email || ''}"`,
+      `"${m.email || ""}"`,
       `"${m.boundDeviceId}"`,
       `"${new Date(m.registeredAt).toLocaleDateString()}"`,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${(church?.churchCode || 'organization').toLowerCase()}-users.csv`);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `${(church?.churchCode || "organization").toLowerCase()}-users.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Exported CSV directory.');
+    toast.success("Exported CSV directory.");
   };
 
   return (
@@ -163,8 +189,8 @@ export const MembersPage: React.FC = () => {
           <div className="section-tag">// WORKFORCE REGISTRY & ROSTER</div>
           <h1 className={styles.headerTitle}>Organization Registered Users</h1>
           <p className={styles.headerSubtitle}>
-            Enrolled workforce directory and mobile device hardware credentials for{' '}
-            {church?.churchName || 'Your Organization'}.
+            Enrolled workforce directory and mobile device hardware credentials
+            for {church?.churchName || "Your Organization"}.
           </p>
         </div>
 
@@ -176,7 +202,7 @@ export const MembersPage: React.FC = () => {
             title="Click to copy pairing code for mobile users"
           >
             <span>Pairing Code:</span>
-            <code>{church?.churchCode || 'CODE'}</code>
+            <code>{church?.churchCode || "CODE"}</code>
           </button>
           <button
             type="button"
@@ -212,7 +238,9 @@ export const MembersPage: React.FC = () => {
           <span className={styles.metricLabel}>Clocked In Today</span>
           <span className={styles.metricValue}>{todayCheckedInCount}</span>
           <span className={styles.metricHint}>
-            {totalCount > 0 ? `${Math.round((todayCheckedInCount / totalCount) * 100)}% attendance` : '0% attendance'}
+            {totalCount > 0
+              ? `${Math.round((todayCheckedInCount / totalCount) * 100)}% attendance`
+              : "0% attendance"}
           </span>
         </div>
       </div>
@@ -221,8 +249,8 @@ export const MembersPage: React.FC = () => {
       <div className={styles.deptChipsScroll}>
         <button
           type="button"
-          onClick={() => setSelectedDept('ALL')}
-          className={`${styles.deptChip} ${selectedDept === 'ALL' ? styles.deptChipActive : ''}`}
+          onClick={() => setSelectedDept("ALL")}
+          className={`${styles.deptChip} ${selectedDept === "ALL" ? styles.deptChipActive : ""}`}
         >
           <span>All Units</span>
           <span className={styles.deptChipBadge}>{members.length}</span>
@@ -234,7 +262,7 @@ export const MembersPage: React.FC = () => {
               key={dept}
               type="button"
               onClick={() => setSelectedDept(dept)}
-              className={`${styles.deptChip} ${selectedDept === dept ? styles.deptChipActive : ''}`}
+              className={`${styles.deptChip} ${selectedDept === dept ? styles.deptChipActive : ""}`}
             >
               <span>{dept}</span>
               <span className={styles.deptChipBadge}>{count}</span>
@@ -258,11 +286,15 @@ export const MembersPage: React.FC = () => {
           </div>
 
           <div className={styles.toolbarCount}>
-            {filteredMembers.length} {filteredMembers.length === 1 ? 'user' : 'users'}
+            {filteredMembers.length}{" "}
+            {filteredMembers.length === 1 ? "user" : "users"}
           </div>
         </div>
 
-        <div className="data-table-container" style={{ border: 'none', borderRadius: 0 }}>
+        <div
+          className="data-table-container"
+          style={{ border: "none", borderRadius: 0 }}
+        >
           <table className="data-table">
             <thead>
               <tr>
@@ -272,7 +304,7 @@ export const MembersPage: React.FC = () => {
                 <th>Device Hardware</th>
                 <th>Face Biometric</th>
                 <th>Enrolled Date</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -282,56 +314,89 @@ export const MembersPage: React.FC = () => {
                     <div className={styles.emptyState}>
                       <div className={styles.emptyTitle}>No users found</div>
                       <div className={styles.emptyDesc}>
-                        {members.length === 0
+                        {/* {members.length === 0
                           ? `Personnel register directly via the mobile app using Organization Code "${church?.churchCode || 'CODE'}".`
-                          : 'No registered personnel match the current filter criteria.'}
+                          : 'No registered personnel match the current filter criteria.'} */}
                       </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredMembers.map((member) => {
-                  const isBound = member.boundDeviceId && member.boundDeviceId !== 'UNBOUND';
-                  const isFaceBound = Boolean(member.isFaceEnrolled || (member.faceEmbedding && member.faceEmbedding.length > 0));
+                  const isBound =
+                    member.boundDeviceId && member.boundDeviceId !== "UNBOUND";
+                  const isFaceBound = Boolean(
+                    member.isFaceEnrolled ||
+                    (member.faceEmbedding && member.faceEmbedding.length > 0),
+                  );
                   const displayAvatar = member.facePhotoURL || member.photoURL;
 
                   return (
                     <tr key={member.id}>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
                           {displayAvatar ? (
                             <img
                               src={displayAvatar}
                               alt=""
-                              style={{ width: 28, height: 28, borderRadius: 0, objectFit: 'cover', border: '1px solid var(--border-subtle)' }}
+                              style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 0,
+                                objectFit: "cover",
+                                border: "1px solid var(--border-subtle)",
+                              }}
                             />
                           ) : null}
                           <div className={styles.memberNameCol}>
-                            <span className={styles.memberName}>{member.fullName}</span>
-                            {member.email && <span className={styles.memberEmail}>{member.email}</span>}
+                            <span className={styles.memberName}>
+                              {member.fullName}
+                            </span>
+                            {member.email && (
+                              <span className={styles.memberEmail}>
+                                {member.email}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
 
                       <td>
-                        <span style={{ fontSize: '0.825rem', color: 'var(--text-body)' }}>
+                        <span
+                          style={{
+                            fontSize: "0.825rem",
+                            color: "var(--text-body)",
+                          }}
+                        >
                           {member.department}
                         </span>
                       </td>
 
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.825rem' }}>
+                      <td
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "0.825rem",
+                        }}
+                      >
                         {member.phone}
                       </td>
 
                       <td>
                         {isBound ? (
-                          <span className={styles.deviceMono} title={`Device Hardware ID: ${member.boundDeviceId}`}>
+                          <span
+                            className={styles.deviceMono}
+                            title={`Device Hardware ID: ${member.boundDeviceId}`}
+                          >
                             {member.boundDeviceId.slice(0, 16)}...
                           </span>
                         ) : (
-                          <span className={styles.deviceUnbound}>
-                            Unpinned
-                          </span>
+                          <span className={styles.deviceUnbound}>Unpinned</span>
                         )}
                       </td>
 
@@ -339,33 +404,40 @@ export const MembersPage: React.FC = () => {
                         {isFaceBound ? (
                           <span
                             style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
+                              display: "inline-flex",
+                              alignItems: "center",
                               gap: 5,
-                              padding: '2px 8px',
-                              fontSize: '0.75rem',
+                              padding: "2px 8px",
+                              fontSize: "0.75rem",
                               fontWeight: 700,
-                              color: '#059669',
-                              background: '#ECFDF5',
-                              border: '1px solid #A7F3D0',
+                              color: "#059669",
+                              background: "#ECFDF5",
+                              border: "1px solid #A7F3D0",
                             }}
                             title="Facial biometric vector bound to account"
                           >
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669' }} />
+                            <span
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "#059669",
+                              }}
+                            />
                             Bound
                           </span>
                         ) : (
                           <span
                             style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
+                              display: "inline-flex",
+                              alignItems: "center",
                               gap: 5,
-                              padding: '2px 8px',
-                              fontSize: '0.75rem',
+                              padding: "2px 8px",
+                              fontSize: "0.75rem",
                               fontWeight: 600,
-                              color: '#B45309',
-                              background: '#FEF3C7',
-                              border: '1px solid #FDE68A',
+                              color: "#B45309",
+                              background: "#FEF3C7",
+                              border: "1px solid #FDE68A",
                             }}
                             title="Worker has not yet enrolled facial biometrics"
                           >
@@ -374,11 +446,16 @@ export const MembersPage: React.FC = () => {
                         )}
                       </td>
 
-                      <td style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+                      <td
+                        style={{
+                          fontSize: "0.825rem",
+                          color: "var(--text-muted)",
+                        }}
+                      >
                         {new Date(member.registeredAt).toLocaleDateString([], {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
                         })}
                       </td>
 
@@ -397,7 +474,7 @@ export const MembersPage: React.FC = () => {
                               type="button"
                               onClick={() => handleResetFaceID(member)}
                               className={styles.textActionBtn}
-                              style={{ color: '#0284C7' }}
+                              style={{ color: "#0284C7" }}
                               title="Reset facial biometric profile so user can re-enroll on next clock-in"
                             >
                               Reset Face
@@ -425,7 +502,7 @@ export const MembersPage: React.FC = () => {
       <DeleteMemberModal
         isOpen={isDeleteModalOpen}
         member={memberToDelete}
-        churchName={church?.churchName || 'Your Organization'}
+        churchName={church?.churchName || "Your Organization"}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setMemberToDelete(null);
