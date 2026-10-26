@@ -6,7 +6,7 @@
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth%20v13-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![Deployment](https://img.shields.io/badge/Deployed-Vercel-000000?logo=vercel&logoColor=white)](https://presenti-admin-web.vercel.app)
 
-**Presenti** is an enterprise workforce attendance and physical presence verification ecosystem. It eliminates proxy attendance, buddy punching, and location spoofing through multi-tiered physical verification combining hardware Wi-Fi BSSID radio analysis, satellite GPS geofencing, and device biometric locks.
+**Presenti** is an enterprise workforce attendance and physical presence verification ecosystem. It eliminates proxy attendance, buddy punching, and location spoofing through multi-tiered physical verification combining hardware Wi-Fi BSSID radio analysis, satellite GPS geofencing, native device biometrics, and on-device facial verification.
 
 This repository contains the **Admin Web Portal**, the central command dashboard for organizational leadership to monitor live workforce attendance, configure attendance windows and service policies, pair premises presence anchors, and audit attendance records.
 
@@ -15,6 +15,7 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 ## Live Production Deployment
 
 - **Production Portal:** [https://presenti-admin-web.vercel.app](https://presenti-admin-web.vercel.app)
+- **Deployment Platform:** Vercel (Auto-deployed from `master` branch)
 
 ---
 
@@ -65,7 +66,7 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 ### 5. Real-Time Dashboard & Live Attendance Stream
 - **Live Attendance KPI Cards:** Real-time counts for **Total Present**, **On-Time Arrivals**, **Late Arrivals**, and **Signed Out Workers**.
 - **Dynamic Attendance Stream:** Sub-second Firestore snapshot stream displaying clock-ins the millisecond workers punch in.
-- **Detailed Audit Trail:** Displays arrival timestamp, punctuality badge (`ON-TIME` vs. `LATE`), departure sign-out timestamp, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), native biometric confirmation, and device hardware signatures.
+- **Detailed Audit Trail:** Displays arrival timestamp, punctuality badge (`ON-TIME` vs. `LATE`), departure sign-out timestamp, verification method (`WIFI_BSSID` vs. `GEO_FALLBACK`), native biometric confirmation, face verification status, and device hardware signatures.
 
 ### 6. Monthly Audit Matrix & Export Engine
 - **Scheduled Day Aggregation:** Automatically groups workforce attendance across designated meeting and service days (e.g. Sundays, Wednesdays, weekdays).
@@ -79,29 +80,13 @@ This repository contains the **Admin Web Portal**, the central command dashboard
 
 ---
 
-## System Architecture
-
-```mermaid
-graph TD
-    Admin[Admin Web Portal] -->|Selects Architecture & Geofence| Firestore[(Cloud Firestore)]
-    Admin -->|Displays Live Pairing QR| Session[Calibration Session]
-    AdminPhone[Admin Mobile Phone] -->|Scans QR via 5s Secret Gesture| Session
-    AdminPhone -->|Detects Router BSSID & GPS Coordinates| Firestore
-    Firestore -->|Live Real-time Sync| Admin
-    Worker[Worker Mobile App] -->|Traps Clock-In Time & Verifies Anchors| Firestore
-    Firestore -->|Sub-second Stream| Admin
-    Firestore -->|Feeds Attendance Records| Matrix[Monthly Audit Matrix Engine]
-```
-
----
-
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | **Frontend Framework** | React 18 (TypeScript) |
 | **Build Tooling** | Vite 5 |
-| **Styling** | Vanilla CSS Modules + Tailwind CSS + Lucide Icons |
+| **Styling** | Vanilla CSS Modules + Lucide Icons |
 | **Map & Geocoding** | Leaflet / React-Leaflet + Multi-Tier Geocoding (Google Maps API + Photon Nigeria BBox + Nominatim) |
 | **Database & Auth** | Firebase Authentication + Cloud Firestore |
 | **Deployment** | Vercel Serverless Hosting |
@@ -111,7 +96,7 @@ graph TD
 ## Smart Location Pinpointing & Geocoding
 
 The premises calibration engine integrates multi-tiered geocoding:
-1. **Nigerian State Abbreviation Normalization:** Automatically expands state codes (e.g., `CRS` &rarr; `Cross River State`, `FCT` &rarr; `Abuja`, `LG` &rarr; `Lagos State`, `PH` &rarr; `Port Harcourt`).
+1. **Nigerian State Abbreviation Normalization:** Automatically expands state codes (e.g., `CRS` → `Cross River State`, `FCT` → `Abuja`, `LG` → `Lagos State`, `PH` → `Port Harcourt`).
 2. **Nigeria Bounding Box Enforcement:** Scopes searches with bounding box `bbox=2.6769,4.2725,14.6778,13.8920` and `countrycodes=ng` to completely eliminate false positives overseas.
 3. **Google Maps Geocoding API Support:** Optional integration with Google Maps Platform via `VITE_GOOGLE_MAPS_API_KEY` ($200 monthly free tier).
 4. **Coordinate & Link Parser:** Direct recognition and parsing of Google Maps URLs, `@lat,lng` strings, and raw coordinates.
@@ -161,9 +146,10 @@ The premises calibration engine integrates multi-tiered geocoding:
 
 ---
 
-## Git Branches
+## Git Branches & Production Deployment
 
-- `master`: Production release branch.
+- `master`: Production release branch deployed live on Vercel.
+- `role-upgrade`: Active feature integration branch.
 - `stable`: Verified, stable release checkpoint.
 
 ---
